@@ -61,7 +61,7 @@ def create_chart(df, parameter, selected_columns=None, date_angle=-90, legend_po
         
     # 2. Add Regulation Lines
     # Identify regulation columns
-    limit_cols = [col for col in df.columns if col.startswith('lim_')]
+    limit_cols = [col for col in df.columns if col.startswith('lim_') or col.startswith('ISGQ') or col.startswith('PEL')]
     
     # Filter if user selected specific ones
     if selected_columns is not None:
@@ -148,6 +148,15 @@ def create_chart(df, parameter, selected_columns=None, date_angle=-90, legend_po
             reg_body = f"LMP {year}"
             category = " ".join(parts[2:]).replace("_", " ").lower()
 
+        # --- SEDIMENTS LABELS ---
+        elif 'ISGQ' in col_name or 'PEL' in col_name:
+             # ISGQ_freshwater -> parts: ['ISGQ', 'freshwater']
+             reg_body = parts[0] # ISGQ or PEL
+             category = " ".join(parts[1:]).capitalize() # freshwater -> Freshwater
+             
+             prefix = "" # No Lim. inf./sup. prefix for these usually
+             return f"{reg_body}<br>{category}"
+
         else:
             reg_body = parts[0].upper()
             category = " ".join(parts[1:]).upper()
@@ -190,8 +199,8 @@ def create_chart(df, parameter, selected_columns=None, date_angle=-90, legend_po
                     color = 'rgba(0, 0, 255, 0.5)' # Blue with 0.5 alpha
                     
             # 2. ECA 2017 (General): Red
-            elif 'eca_2017' in col_lower or 'suelo' in col_lower or 'sedimento' in col_lower:
-                # Base is Red (Matching Surface Water style as requested)
+            elif 'eca_2017' in col_lower:
+                # Base is Red
                 if 'lim_inf' in col_lower:
                     # Original: color='r', linestyle='-', alpha=0.5
                     dash = 'solid'
@@ -252,22 +261,14 @@ def create_chart(df, parameter, selected_columns=None, date_angle=-90, legend_po
                     dash = 'dash' # --, alpha=0.5
                     color = 'rgba(255, 0, 0, 0.5)'
 
-            # 7. CCME (Sedimentos)
-            elif 'ccme' in col_lower:
-                # Assign distinct colors for Freshwater vs Marine
-                if 'marine' in col_lower:
-                     color = 'teal' 
-                else: # freshwater
-                     color = 'orange'
-                
-                # Check line style
-                if 'lim_inf' in col_lower:
-                    dash = 'dot' 
-                else:
-                    dash = 'solid'
-                    # Make it slightly transparent if it's a solid limit line
-                    if color == 'teal': color = 'rgba(0, 128, 128, 0.7)'
-                    if color == 'orange': color = 'rgba(255, 165, 0, 0.7)'
+            # --- SEDIMENTS STYLES ---
+            elif 'isgq' in col_lower:
+                color = 'purple'
+                dash = 'dashdot' # -.
+            
+            elif 'pel' in col_lower:
+                color = 'red'
+                dash = 'dashdot' # -.
 
             # Add Line Trace
             fig.add_trace(go.Scatter(

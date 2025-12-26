@@ -69,10 +69,9 @@ def landing_page():
             st.rerun()
 
     with col3:
-        if st.button("🪨 Sedimentos", use_container_width=True):
+        if st.button("⛰️ Sedimentos", use_container_width=True):
             navigate_to('sediments')
             st.rerun()
-
 
 
 
@@ -91,13 +90,18 @@ def water_quality_module(module_type="surface"):
     elif module_type == "effluents":
         title = "🏭 Efluentes - Comparativa LMP/NMP"
         default_file = "bbdd_molde_efluentes.xlsx"
-        reg_defaults_filter = [] 
+        reg_defaults_filter = [] # No smart filter for effluents defined yet, or default to all
         success_msg_prefix = "Efluentes"
-    else: # sediments
-        title = "🪨 Sedimentos - Comparativa CCME"
+    elif module_type == "sediments":
+        title = "⛰️ Sedimentos - Comparativa CCME"
         default_file = "bbdd_molde_sedimentos.xlsx"
-        reg_defaults_filter = ["CCME"] 
+        reg_defaults_filter = [] # Defaults handled later
         success_msg_prefix = "Sedimentos"
+    else:
+        title = "Módulo Desconocido"
+        default_file = ""
+        reg_defaults_filter = []
+        success_msg_prefix = "Datos"
 
     # Navigation Back Button
     if st.button("⬅️ Volver al Inicio"):
