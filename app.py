@@ -215,6 +215,16 @@ def water_quality_module(module_type="surface"):
                     )
                     selected_date_format = date_format_options[selected_date_format_label]
                     
+                    # Number of X-axis Labels (0 = Auto)
+                    custom_x_labels = st.sidebar.number_input(
+                        "Cantidad de Etiquetas (Eje X) (0 = Auto)",
+                        min_value=0,
+                        max_value=50,
+                        value=0,
+                        step=1,
+                        help="Establece un número fijo de etiquetas en el eje X. Deja en 0 para automático."
+                    )
+                    
                     # Symbol Style
                     symbol_options = {"Círculo": "circle", "Variado": "varied"}
                     selected_symbol_label = st.sidebar.selectbox(
@@ -233,6 +243,7 @@ def water_quality_module(module_type="surface"):
                             selected_columns=selected_cols,
                             date_angle=selected_angle,
                             date_format=selected_date_format,
+                            x_label_count=custom_x_labels,
                             legend_position=legend_pos_options[selected_legend_pos],
                             symbol_style=selected_symbol_style
                         )

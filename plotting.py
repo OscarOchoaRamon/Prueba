@@ -1,7 +1,7 @@
 import plotly.graph_objects as go
 import pandas as pd
 
-def create_chart(df, parameter, selected_columns=None, date_angle=-90, date_format="MM-YY", legend_position="right", symbol_style="circle"):
+def create_chart(df, parameter, selected_columns=None, date_angle=-90, date_format="MM-YY", x_label_count=0, legend_position="right", symbol_style="circle"):
     """
     Creates an interactive Plotly chart for a specific parameter.
     Dynamically adds regulation lines found in the dataframe.
@@ -357,18 +357,27 @@ def create_chart(df, parameter, selected_columns=None, date_angle=-90, date_form
         # Heuristic for "appropriate amount" of ticks (Python choosing defaults)
         # Target: Avoid overcrowding. For 15cm width (~570px), maybe 8-12 labels max.
         
-        if delta_days <= 60:
-             freq = '5D' # Every 5 days for short ranges
-        elif delta_days <= 365: # 1 year -> Monthly
-            freq = 'MS' # Month Start
-        elif delta_days <= 365 * 2: # 2 years -> Every 2 months
-            freq = '2MS'
-        elif delta_days <= 365 * 5: # 5 years -> Every 6 months
-            freq = '6MS'
-        else: # > 5 years -> Yearly
-            freq = 'AS' # Year Start
-            
-        tick_dates = pd.date_range(start=min_date, end=max_date, freq=freq)
+        if x_label_count > 0:
+            # Manual count: Generate 'periods=x_label_count' evenly spaced dates
+            # We want at least the start and end, and intermediates
+            if x_label_count == 1:
+                tick_dates = pd.DatetimeIndex([min_date])
+            else:
+                 tick_dates = pd.date_range(start=min_date, end=max_date, periods=x_label_count)
+        else:
+            # Auto logic
+            if delta_days <= 60:
+                 freq = '5D' # Every 5 days for short ranges
+            elif delta_days <= 365: # 1 year -> Monthly
+                freq = 'MS' # Month Start
+            elif delta_days <= 365 * 2: # 2 years -> Every 2 months
+                freq = '2MS'
+            elif delta_days <= 365 * 5: # 5 years -> Every 6 months
+                freq = '6MS'
+            else: # > 5 years -> Yearly
+                freq = 'AS' # Year Start
+                
+            tick_dates = pd.date_range(start=min_date, end=max_date, freq=freq)
         
         # Spanish Month Names map
         spanish_months = {
