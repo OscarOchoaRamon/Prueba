@@ -206,6 +206,15 @@ def water_quality_module(module_type="surface"):
                         index=4 
                     )
                     
+                    # Date Format
+                    date_format_options = {"Mes-Año (Ene-25)": "MM-YY", "Día-Mes-Año (23-Ene-25)": "DD-MM-YY"}
+                    selected_date_format_label = st.sidebar.selectbox(
+                        "Formato de Fecha (Eje X)",
+                        options=list(date_format_options.keys()),
+                        index=0
+                    )
+                    selected_date_format = date_format_options[selected_date_format_label]
+                    
                     # Symbol Style
                     symbol_options = {"Círculo": "circle", "Variado": "varied"}
                     selected_symbol_label = st.sidebar.selectbox(
@@ -223,6 +232,7 @@ def water_quality_module(module_type="surface"):
                             selected_param, 
                             selected_columns=selected_cols,
                             date_angle=selected_angle,
+                            date_format=selected_date_format,
                             legend_position=legend_pos_options[selected_legend_pos],
                             symbol_style=selected_symbol_style
                         )

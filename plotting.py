@@ -1,7 +1,7 @@
 import plotly.graph_objects as go
 import pandas as pd
 
-def create_chart(df, parameter, selected_columns=None, date_angle=-90, legend_position="right", symbol_style="circle"):
+def create_chart(df, parameter, selected_columns=None, date_angle=-90, date_format="MM-YY", legend_position="right", symbol_style="circle"):
     """
     Creates an interactive Plotly chart for a specific parameter.
     Dynamically adds regulation lines found in the dataframe.
@@ -378,7 +378,12 @@ def create_chart(df, parameter, selected_columns=None, date_angle=-90, legend_po
         
         tick_vals = tick_dates
         # Use 2-digit year (e.g., '21' instead of '2021')
-        tick_text = [f"{spanish_months[d.month]}-{str(d.year)[-2:]}" for d in tick_dates]
+        if date_format == "DD-MM-YY":
+            # Format: 23-Ene-25
+            tick_text = [f"{d.day}-{spanish_months[d.month]}-{str(d.year)[-2:]}" for d in tick_dates]
+        else:
+            # Format: Ene-25 (Default)
+            tick_text = [f"{spanish_months[d.month]}-{str(d.year)[-2:]}" for d in tick_dates]
         
         fig.update_xaxes(
             tickmode='array', # CRITICAL: Forces Plotly to use our custom vals/text/
