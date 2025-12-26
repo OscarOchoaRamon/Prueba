@@ -94,9 +94,9 @@ def water_quality_module(module_type="surface"):
         reg_defaults_filter = [] 
         success_msg_prefix = "Efluentes"
     else: # sediments
-        title = "🪨 Sedimentos - Comparativa ECA"
+        title = "🪨 Sedimentos - Comparativa CCME"
         default_file = "bbdd_molde_sedimentos.xlsx"
-        reg_defaults_filter = [] # Unknown defaults yet
+        reg_defaults_filter = ["CCME"] 
         success_msg_prefix = "Sedimentos"
 
     # Navigation Back Button

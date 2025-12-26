@@ -252,6 +252,23 @@ def create_chart(df, parameter, selected_columns=None, date_angle=-90, legend_po
                     dash = 'dash' # --, alpha=0.5
                     color = 'rgba(255, 0, 0, 0.5)'
 
+            # 7. CCME (Sedimentos)
+            elif 'ccme' in col_lower:
+                # Assign distinct colors for Freshwater vs Marine
+                if 'marine' in col_lower:
+                     color = 'teal' 
+                else: # freshwater
+                     color = 'orange'
+                
+                # Check line style
+                if 'lim_inf' in col_lower:
+                    dash = 'dot' 
+                else:
+                    dash = 'solid'
+                    # Make it slightly transparent if it's a solid limit line
+                    if color == 'teal': color = 'rgba(0, 128, 128, 0.7)'
+                    if color == 'orange': color = 'rgba(255, 165, 0, 0.7)'
+
             # Add Line Trace
             fig.add_trace(go.Scatter(
                 x=[subset['fecha'].min(), subset['fecha'].max()],
