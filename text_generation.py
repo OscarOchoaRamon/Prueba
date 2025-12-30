@@ -66,9 +66,9 @@ def get_base_statistics_text(grupo):
     else:
         min_t, max_t, prom_t = "NaN", "NaN", "NaN"
     
-    if all(es_LD):
+    if all(es_LD_list):
         resumen = f"se encontraron por debajo del límite de detección ({', '.join(ld_unicos)} {unidad})"
-    elif not any(es_LD):
+    elif not any(es_LD_list):
         resumen = f"variaron desde un mínimo igual a {min_t} {unidad} hasta un máximo igual a {max_t} {unidad}, contando con un valor promedio de {prom_t} {unidad}"
     else:
         resumen = f"variaron desde por debajo del límite de detección ({', '.join(ld_unicos)} {unidad}) hasta un máximo igual a {max_t} {unidad}, con un valor promedio de {prom_t} {unidad}"
