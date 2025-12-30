@@ -63,7 +63,12 @@ def get_base_statistics_text(grupo):
         
         min_t = format_number(minimo)
         max_t = format_number(maximo)
-        prom_t = format_number(round(promedio, 2)) # Round average to 2 decimals
+        
+        # Only round if value is large enough to not become 0
+        if abs(promedio) >= 0.1:
+            prom_t = format_number(round(promedio, 2))
+        else:
+            prom_t = format_number(promedio)
     else:
         min_t, max_t, prom_t = "NaN", "NaN", "NaN"
     
