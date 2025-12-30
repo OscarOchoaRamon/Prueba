@@ -157,6 +157,13 @@ def create_chart(df, parameter, selected_columns=None, date_angle=-90, date_form
              prefix = "" # No Lim. inf./sup. prefix for these usually
              return f"{reg_body}<br>{category}"
 
+        # --- GROUNDWATER REFERENCE ---
+        elif 'referencia_gw' in col_name:
+            reg_body = "Valor Referencial"
+            category = "Promedio + 2 Desv. Est."
+            prefix = "" # No prefix
+            return f"{reg_body}<br>{category}"
+
         else:
             reg_body = parts[0].upper()
             category = " ".join(parts[1:]).upper()
@@ -269,6 +276,12 @@ def create_chart(df, parameter, selected_columns=None, date_angle=-90, date_form
             elif 'pel' in col_lower:
                 color = 'red'
                 dash = 'dashdot' # -.
+
+            # --- GROUNDWATER STYLE ---
+            elif 'referencia_gw' in col_lower:
+                color = 'red'
+                dash = 'dash'
+                width = 2
 
             # Add Line Trace
             fig.add_trace(go.Scatter(

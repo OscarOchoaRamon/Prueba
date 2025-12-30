@@ -152,3 +152,16 @@ def get_regulation_groups(df):
         groups[friendly_name].append(col)
         
     return groups
+
+def calculate_reference_statistics(df):
+    """
+    Calculates the reference value (Mean + 2*Std) for the given data.
+    """
+    if df.empty:
+        return None
+        
+    mean_val = df['valor'].mean()
+    std_val = df['valor'].std(ddof=1) # Sample standard deviation
+    
+    return mean_val + (2 * std_val)
+

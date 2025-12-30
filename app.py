@@ -1,6 +1,6 @@
 import streamlit as st
 
-from processing import load_data, clean_data, merge_data, get_regulation_groups
+from processing import load_data, clean_data, merge_data, get_regulation_groups, calculate_reference_statistics
 from plotting import create_chart
 import os
 import shutil
@@ -56,7 +56,7 @@ def landing_page():
     st.title("🌍 Calidad ambiental")
     st.markdown("### Seleccione el módulo que desea consultar:")
     
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)
     
     with col1:
         if st.button("🌊 Agua Superficial", use_container_width=True):
@@ -64,11 +64,16 @@ def landing_page():
             st.rerun()
             
     with col2:
+        if st.button("💧 Agua Subterránea", use_container_width=True):
+            navigate_to('groundwater')
+            st.rerun()
+
+    with col3:
         if st.button("🏭 Efluentes", use_container_width=True):
             navigate_to('effluents')
             st.rerun()
 
-    with col3:
+    with col4:
         if st.button("⛰️ Sedimentos", use_container_width=True):
             navigate_to('sediments')
             st.rerun()
@@ -97,6 +102,16 @@ def water_quality_module(module_type="surface"):
         default_file = "bbdd_molde_sedimentos.xlsx"
         reg_defaults_filter = [] # Defaults handled later
         success_msg_prefix = "Sedimentos"
+    elif module_type == "sediments":
+        title = "⛰️ Sedimentos - Comparativa CCME"
+        default_file = "bbdd_molde_sedimentos.xlsx"
+        reg_defaults_filter = [] # Defaults handled later
+        success_msg_prefix = "Sedimentos"
+    elif module_type == "groundwater":
+        title = "💧 Agua Subterránea - Análisis Estadístico"
+        default_file = "bbdd_molde.xlsx" # Use same mold, will ignore ECA
+        reg_defaults_filter = [] 
+        success_msg_prefix = "Agua Subterránea"
     else:
         title = "Módulo Desconocido"
         default_file = ""
@@ -138,6 +153,16 @@ def water_quality_module(module_type="surface"):
                     
                     # Merge with Regulations
                     df_final = merge_data(df_clean, df_eca)
+
+                    # --- GROUNDWATER SPECIFIC LOGIC ---
+                    if module_type == "groundwater":
+                         # Calculate Reference Statistics per Parameter
+                         df_final['lim_referencia_gw'] = None # Initialize
+                         for param in df_final['parametro'].unique():
+                             mask = df_final['parametro'] == param
+                             subset = df_final[mask]
+                             ref_val = calculate_reference_statistics(subset)
+                             df_final.loc[mask, 'lim_referencia_gw'] = ref_val
                     
                     st.success(f"Archivo de {success_msg_prefix} cargado con éxito. {len(df_final)} registros procesados.")
                     
@@ -148,43 +173,50 @@ def water_quality_module(module_type="surface"):
                     params = df_final['parametro'].unique()
                     selected_param = st.sidebar.selectbox("Seleccionar Parámetro", params)
                     
-                    # --- Regulation Filtering ---
-                    st.sidebar.subheader("Normativas")
-                    # Group regulation columns
-                    reg_groups = get_regulation_groups(df_final)
+                    selected_cols = []
                     
-                    # Create options list
-                    standard_names = list(reg_groups.keys())
-                    
-                    if standard_names:
-                        # Smart defaults
-                        defaults = []
-                        if module_type == "surface":
-                            defaults = [
-                                name for name in standard_names 
-                                if any(f in name for f in reg_defaults_filter)
-                            ]
-                        else:
-                            # For effluents, maybe default to all is safer initially?
-                            defaults = standard_names
-
-                        # Fallback if filter found nothing
-                        if not defaults: 
-                            defaults = standard_names
-
-                        selected_standards = st.sidebar.multiselect(
-                            "Seleccionar Normativas a visualizar",
-                            standard_names,
-                            default=defaults
-                        )
+                    # --- Regulation Filtering (SKIP FOR GROUNDWATER) ---
+                    if module_type != "groundwater":
+                        st.sidebar.subheader("Normativas")
+                        # Group regulation columns
+                        reg_groups = get_regulation_groups(df_final)
                         
-                        # Flatten the selection back to a list of columns
-                        selected_cols = []
-                        for std in selected_standards:
-                            selected_cols.extend(reg_groups[std])
+                        # Create options list
+                        standard_names = list(reg_groups.keys())
+                        
+                        if standard_names:
+                            # Smart defaults
+                            defaults = []
+                            if module_type == "surface":
+                                defaults = [
+                                    name for name in standard_names 
+                                    if any(f in name for f in reg_defaults_filter)
+                                ]
+                            else:
+                                # For effluents, maybe default to all is safer initially?
+                                defaults = standard_names
+
+                            # Fallback if filter found nothing
+                            if not defaults: 
+                                defaults = standard_names
+
+                            selected_standards = st.sidebar.multiselect(
+                                "Seleccionar Normativas a visualizar",
+                                standard_names,
+                                default=defaults
+                            )
+                            
+                            # Flatten the selection back to a list of columns
+                            selected_cols = []
+                            for std in selected_standards:
+                                selected_cols.extend(reg_groups[std])
+                        else:
+                            selected_cols = None
+                            st.sidebar.info("No se encontraron normativas en el archivo.")
                     else:
-                        selected_cols = None
-                        st.sidebar.info("No se encontraron normativas en el archivo.")
+                        # For Groundwater, automatically select the reference column
+                        selected_cols = ['lim_referencia_gw']
+                        st.sidebar.info("Se mostrará el Valor Referencial (Promedio + 2 Desviaciones Estándar).")
                     
                     # --- CUSTOMIZATION CONTROLS ---
                     st.sidebar.markdown("---")
@@ -284,6 +316,8 @@ if st.session_state['page'] == 'landing':
     landing_page()
 elif st.session_state['page'] == 'surface':
     water_quality_module(module_type="surface")
+elif st.session_state['page'] == 'groundwater':
+    water_quality_module(module_type="groundwater")
 elif st.session_state['page'] == 'effluents':
     water_quality_module(module_type="effluents")
 elif st.session_state['page'] == 'sediments':
