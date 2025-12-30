@@ -147,8 +147,20 @@ def generate_text_surface(grupo, selected_regulations):
         'eca_2008_1a3': ('aguas que pueden ser potabilizadas con tratamiento avanzado', '1 - A3'),
         'eca_2008_1b1': ('aguas superficiales destinadas para recreación de contacto primario', '1 - B1'),
         'eca_2008_1b2': ('aguas superficiales destinadas para recreación de contacto secundario', '1 - B2'),
+        # Add missing ones implied by user '2C1', etc.
+        'eca_2008_2c1': ('extracción y cultivo de moluscos, equinodermos y tunicados en aguas marino costeras', '2 - C1'),
+        'eca_2008_2c2': ('extracción y cultivo de otras especies hidrobiológicas en aguas marino costeras', '2 - C2'),
+        'eca_2008_2c3': ('actividades marino portuarias, industriales o de saneamiento en aguas marino costeras', '2 - C3'),
+        'eca_2008_2c4': ('extracción y cultivo de especies hidrobiológicas en lagos y lagunas', '2 - C4'),
+        'eca_2008_3d1': ('riego de vegetales', '3 - D1'),
+        'eca_2008_3d2': ('bebida de animales', '3 - D2'),
+        'eca_2008_4e1': ('conservación del ambiente acuático para lagunas y lagos', '4 - E1'),
+        'eca_2008_4e2_cys': ('conservación del ambiente acuático para ríos', '4 - E2 costa y sierra'),
+        'eca_2008_4e2_s': ('conservación del ambiente acuático para ríos', '4 - E2 selva'),
+        'eca_2008_4e3_e': ('conservación del ambiente acuático para ecosistemas costeros y marinos', '4 - E3 estuarios'),
+        'eca_2008_4e3_m': ('conservación del ambiente acuático para ecosistemas costeros y marinos', '4 - E3 marinos'),
         
-        # ECA 2015 (User mentioned these)
+        # ECA 2015 
         'eca_2015_3d1': ('riego de vegetales', '3 - D1'),
         'eca_2015_3d2': ('bebida de animales', '3 - D2'),
     }
@@ -235,12 +247,7 @@ def generate_text_surface(grupo, selected_regulations):
         # Fallback for key name formatting if not in map
         def format_fallback(k):
              # Try to insert hyphen before logic like "3D1" -> "3-D1"
-             # Simplified: just replace last digit preceded by letter? 
-             # Or just allow mapped ones to be perfect and others to be raw.
-             # User specifically asked for hyphens. 
-             # I will assume common categories follow pattern.
              k_clean = k.replace("_", " ").upper()
-             # Manual fix for common patterns if needed, but Map is best.
              return k_clean
 
         # Use lower case for lookup since regex keys are lower
@@ -265,6 +272,9 @@ def generate_text_surface(grupo, selected_regulations):
         inc = check_compliance(inf, sup)
         lim_fmt = format_limits(inf, sup)
         
+        # Format description logic: Only add if not empty
+        desc_str = f" ({desc})" if desc else ""
+        
         if inc is None:
              # LGA has specific wording without "para agua" if requested, or just "la LGA"
              if std_name == "LGA":
@@ -272,7 +282,7 @@ def generate_text_surface(grupo, selected_regulations):
              else:
                  ref_text = f"el {std_name} para agua para la categoría {cat_name}"
                  
-             texto_list.append(f" Cabe mencionar que no existe {ref_text} ({desc}) aplicable para este parámetro.")
+             texto_list.append(f" Cabe mencionar que no existe {ref_text}{desc_str} aplicable para este parámetro.")
              continue
              
         porc = round(100 * inc / n_total, 0)
