@@ -243,7 +243,9 @@ def generate_text_surface(grupo, selected_regulations):
              # Manual fix for common patterns if needed, but Map is best.
              return k_clean
 
-        desc, cat_name = reg_meta.get(key, ("", format_fallback(key)))
+        # Use lower case for lookup since regex keys are lower
+        lookup_key = key.lower()
+        desc, cat_name = reg_meta.get(lookup_key, ("", format_fallback(key)))
         
         # Determine Standard Name
         if "eca_2017" in key:
