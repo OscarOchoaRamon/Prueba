@@ -264,17 +264,29 @@ def generate_text_surface(grupo, selected_regulations):
         lim_fmt = format_limits(inf, sup)
         
         if inc is None:
-             texto_list.append(f" Cabe mencionar que no existe un {std_name} para agua para la categoría {cat_name} ({desc}) aplicable para este parámetro.")
+             # LGA has specific wording without "para agua" if requested, or just "la LGA"
+             if std_name == "LGA":
+                 ref_text = f"la {std_name} para la categoría {cat_name}"
+             else:
+                 ref_text = f"el {std_name} para agua para la categoría {cat_name}"
+                 
+             texto_list.append(f" Cabe mencionar que no existe {ref_text} ({desc}) aplicable para este parámetro.")
              continue
              
         porc = round(100 * inc / n_total, 0)
         
-        if inc == 0:
-            texto_list.append(f" Al comparar los resultados obtenidos con el {std_name} para agua para la categoría {cat_name} ({lim_fmt} {unidad}), se observa que todos los registros cumplen con el {std_name}.")
-        elif inc == n_total:
-            texto_list.append(f" Al comparar los resultados obtenidos con el {std_name} para agua para la categoría {cat_name} ({lim_fmt} {unidad}), se observa que todos los registros no cumplen con el {std_name}.")
+        # Construct reference text for comparison
+        if std_name == "LGA":
+             ref_text = f"la {std_name} para la categoría {cat_name}"
         else:
-             texto_list.append(f" Al comparar los resultados obtenidos con el {std_name} para agua para la categoría {cat_name} ({lim_fmt} {unidad}), se observa que {inc} ({format_percent(porc)} %) de los registros no cumplen con el valor establecido.")
+             ref_text = f"el {std_name} para agua para la categoría {cat_name}"
+        
+        if inc == 0:
+            texto_list.append(f" Al comparar los resultados obtenidos con {ref_text} ({lim_fmt} {unidad}), se observa que todos los registros cumplen con {std_name}.")
+        elif inc == n_total:
+            texto_list.append(f" Al comparar los resultados obtenidos con {ref_text} ({lim_fmt} {unidad}), se observa que todos los registros no cumplen con {std_name}.")
+        else:
+             texto_list.append(f" Al comparar los resultados obtenidos con {ref_text} ({lim_fmt} {unidad}), se observa que {inc} ({format_percent(porc)} %) de los registros no cumplen con el valor establecido.")
              
     return "".join(texto_list)
 
