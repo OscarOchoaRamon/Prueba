@@ -48,10 +48,14 @@ def clean_data(df):
     
     # We need to handle potential mixed types. 
     # Let's coerce everything to string first for the check.
+    # Create 'valor_raw' to preserve original strings for text generation
+    df['valor_raw'] = df['valor'].astype(str)
+    
     s_values = df['valor'].astype(str)
     
     # Mask for values containing '<'
     mask_less = s_values.str.contains('<', na=False)
+    df['es_LD'] = mask_less # Save LD boolean mask
     
     # 1. Handle values with '<'
     # Remove '<', convert to float, divide by 2.
