@@ -124,6 +124,18 @@ def water_quality_module(module_type="surface"):
         st.rerun()
 
     st.title(title)
+    
+    # --- GROUNDWATER SETTINGS (Pre-processing) ---
+    gw_ref_method = 'mean_plus_2std' # Default
+    if module_type == "groundwater":
+        st.sidebar.header("Configuración Agua Subterránea")
+        ref_option = st.sidebar.radio(
+            "Valor de Referencia",
+            ("Promedio + 2 Desviaciones Estándar", "Promedio - 2 Desviaciones Estándar")
+        )
+        if ref_option == "Promedio - 2 Desviaciones Estándar":
+            gw_ref_method = 'mean_minus_2std'
+
     st.markdown(f"""
     Sube tu archivo Excel con los datos de monitoreo de **{success_msg_prefix}**. 
     La aplicación detectará automáticamente los valores y las líneas de referencia.
@@ -161,7 +173,7 @@ def water_quality_module(module_type="surface"):
                          for param in df_final['parametro'].unique():
                              mask = df_final['parametro'] == param
                              subset = df_final[mask]
-                             ref_val = calculate_reference_statistics(subset)
+                             ref_val = calculate_reference_statistics(subset, method=gw_ref_method)
                              df_final.loc[mask, 'lim_referencia_gw'] = ref_val
                     
                     st.success(f"Archivo de {success_msg_prefix} cargado con éxito. {len(df_final)} registros procesados.")
@@ -216,7 +228,7 @@ def water_quality_module(module_type="surface"):
                     else:
                         # For Groundwater, automatically select the reference column
                         selected_cols = ['lim_referencia_gw']
-                        st.sidebar.info("Se mostrará el Valor Referencial (Promedio + 2 Desviaciones Estándar).")
+                        st.sidebar.info(f"Se mostrará el Valor Referencial ({ref_option}).")
                     
                     # --- CUSTOMIZATION CONTROLS ---
                     st.sidebar.markdown("---")

@@ -153,9 +153,10 @@ def get_regulation_groups(df):
         
     return groups
 
-def calculate_reference_statistics(df):
+def calculate_reference_statistics(df, method='mean_plus_2std'):
     """
-    Calculates the reference value (Mean + 2*Std) for the given data.
+    Calculates the reference value based on the selected method.
+    Options: 'mean_plus_2std' (Mean + 2*Std), 'mean_minus_2std' (Mean - 2*Std)
     """
     if df.empty:
         return None
@@ -163,5 +164,8 @@ def calculate_reference_statistics(df):
     mean_val = df['valor'].mean()
     std_val = df['valor'].std(ddof=1) # Sample standard deviation
     
-    return mean_val + (2 * std_val)
+    if method == 'mean_minus_2std':
+        return mean_val - (2 * std_val)
+    else:
+        return mean_val + (2 * std_val)
 
