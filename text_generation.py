@@ -62,13 +62,13 @@ def get_base_statistics_text(grupo):
         
         min_t = format_number(minimo)
         max_t = format_number(maximo)
-        prom_t = format_number(promedio)
+        prom_t = format_number(round(promedio, 2)) # Round average to 2 decimals
     else:
         min_t, max_t, prom_t = "NaN", "NaN", "NaN"
     
-    if all(es_LD_list):
+    if all(es_LD):
         resumen = f"se encontraron por debajo del límite de detección ({', '.join(ld_unicos)} {unidad})"
-    elif not any(es_LD_list):
+    elif not any(es_LD):
         resumen = f"variaron desde un mínimo igual a {min_t} {unidad} hasta un máximo igual a {max_t} {unidad}, contando con un valor promedio de {prom_t} {unidad}"
     else:
         resumen = f"variaron desde por debajo del límite de detección ({', '.join(ld_unicos)} {unidad}) hasta un máximo igual a {max_t} {unidad}, con un valor promedio de {prom_t} {unidad}"
@@ -346,6 +346,26 @@ def generate_text_effluents(grupo, selected_regs):
         for v in vals:
             if (i is not None and v < i) or (s is not None and v > s): c+=1
         return c
+        
+    has_prior_text = False
+
+    # NMP 1996 MINERO
+    if map_nmp:
+        i, s = get_lims("nmp_minero")
+        n_inc = check_inc(i, s, valores_numericos)
+        lim_str = fmt_lims(i, s)
+        
+        if n_inc is None:
+            texto_list.append(" Cabe mencionar que no existe un NMP 1996 para efluentes minero-metalúrgicos aplicable para este parámetro.")
+        else:
+            porc = round(100*n_inc/n_total, 2)
+            if n_inc == 0:
+                texto_list.append(f" Al comparar los resultados obtenidos con el NMP 1996 para efluentes minero-metalúrgicos ({lim_str} {unidad}), se observa que todos los registros cumplen con el NMP.")
+            elif n_inc == n_total:
+                texto_list.append(f" Al comparar los resultados obtenidos con el NMP 1996 para efluentes minero-metalúrgicos ({lim_str} {unidad}), se observa que todos los registros no cumplen con el NMP.")
+            else:
+                 texto_list.append(f" Al comparar los resultados obtenidos con el NMP 1996 para efluentes minero-metalúrgicos ({lim_str} {unidad}), se observa que {n_inc} ({format_percent(porc)} %) de los registros no cumplen con el valor establecido.")
+        has_prior_text = True
 
     # LMP 2010 MINERO
     if map_lmp_min:
@@ -353,16 +373,22 @@ def generate_text_effluents(grupo, selected_regs):
         n_inc = check_inc(i, s, valores_numericos)
         lim_str = fmt_lims(i, s)
         
+        connector = " Por otro lado, " if has_prior_text else " "
+        first_word = "no" if has_prior_text else "No"
+        
         if n_inc is None:
-            texto_list.append(" Cabe mencionar que no existe un LMP 2010 para efluentes minero-metalúrgicos (valor en cualquier momento) aplicable para este parámetro.")
+            texto_list.append(f"{connector}{first_word} existe un LMP 2010 para efluentes minero-metalúrgicos (valor en cualquier momento) aplicable para este parámetro.")
+            has_prior_text = True
         else:
             porc = round(100*n_inc/n_total, 2)
+            word_comp = "al" if has_prior_text else "Al"
             if n_inc == 0:
-                texto_list.append(f" Al comparar los resultados obtenidos con el LMP 2010 para efluentes minero-metalúrgicos ({lim_str} {unidad}), se observa que todos los registros cumplen con el LMP.")
+                texto_list.append(f"{connector}{word_comp} comparar los resultados obtenidos con el LMP 2010 para efluentes minero-metalúrgicos ({lim_str} {unidad}), se observa que todos los registros cumplen con el LMP.")
             elif n_inc == n_total:
-                texto_list.append(f" Al comparar los resultados obtenidos con el LMP 2010 para efluentes minero-metalúrgicos ({lim_str} {unidad}), se observa que todos los registros no cumplen con el LMP.")
+                texto_list.append(f"{connector}{word_comp} comparar los resultados obtenidos con el LMP 2010 para efluentes minero-metalúrgicos ({lim_str} {unidad}), se observa que todos los registros no cumplen con el LMP.")
             else:
-                 texto_list.append(f" Al comparar los resultados obtenidos con el LMP 2010 para efluentes minero-metalúrgicos ({lim_str} {unidad}), se observa que {n_inc} ({format_percent(porc)} %) de los registros no cumplen con el valor establecido.")
+                 texto_list.append(f"{connector}{word_comp} comparar los resultados obtenidos con el LMP 2010 para efluentes minero-metalúrgicos ({lim_str} {unidad}), se observa que {n_inc} ({format_percent(porc)} %) de los registros no cumplen con el valor establecido.")
+            has_prior_text = True
                  
     # LMP 2010 DOMESTICO
     if map_lmp_dom:
@@ -370,18 +396,20 @@ def generate_text_effluents(grupo, selected_regs):
         n_inc = check_inc(i, s, valores_numericos)
         lim_str = fmt_lims(i, s)
         
-        prefix = " Por otro lado, " if map_lmp_min else " "
+        connector = " Por otro lado, " if has_prior_text else " "
+        first_word = "no" if has_prior_text else "No"
         
         if n_inc is None:
-            texto_list.append(f"{prefix}no existe un valor en los LMP 2010 para efluentes domésticos o municipales aplicable para este parámetro.")
+            texto_list.append(f"{connector}{first_word} existe un valor en los LMP 2010 para efluentes domésticos o municipales aplicable para este parámetro.")
         else:
             porc = round(100*n_inc/n_total, 2)
+            word_comp = "al" if has_prior_text else "Al"
             if n_inc == 0:
-                texto_list.append(f"{prefix}al comparar los resultados obtenidos con el LMP 2010 para efluentes domésticos o municipales ({lim_str} {unidad}), se observa que todos los registros cumplen con el LMP.")
+                texto_list.append(f"{connector}{word_comp} comparar los resultados obtenidos con el LMP 2010 para efluentes domésticos o municipales ({lim_str} {unidad}), se observa que todos los registros cumplen con el LMP.")
             elif n_inc == n_total:
-                texto_list.append(f"{prefix}al comparar los resultados obtenidos con el LMP 2010 para efluentes domésticos o municipales ({lim_str} {unidad}), se observa que todos los registros no cumplen con el LMP.")
+                texto_list.append(f"{connector}{word_comp} comparar los resultados obtenidos con el LMP 2010 para efluentes domésticos o municipales ({lim_str} {unidad}), se observa que todos los registros no cumplen con el LMP.")
             else:
-                 texto_list.append(f"{prefix}al comparar los resultados obtenidos con LMP 2010 para efluentes domésticos o municipales ({lim_str} {unidad}), se observa que {n_inc} ({format_percent(porc)} %) de los registros no cumplen con el valor establecido.")
+                 texto_list.append(f"{connector}{word_comp} comparar los resultados obtenidos con LMP 2010 para efluentes domésticos o municipales ({lim_str} {unidad}), se observa que {n_inc} ({format_percent(porc)} %) de los registros no cumplen con el valor establecido.")
 
     return "".join(texto_list)
 
