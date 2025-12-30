@@ -126,15 +126,14 @@ def water_quality_module(module_type="surface"):
     st.title(title)
     
     # --- GROUNDWATER SETTINGS (Pre-processing) ---
-    gw_ref_method = 'mean_plus_2std' # Default
+    gw_ref_options = []
     if module_type == "groundwater":
         st.sidebar.header("Configuración Agua Subterránea")
-        ref_option = st.sidebar.radio(
-            "Valor de Referencia",
-            ("Promedio + 2 Desviaciones Estándar", "Promedio - 2 Desviaciones Estándar")
+        gw_ref_options = st.sidebar.multiselect(
+            "Valores de Referencia",
+            ["Promedio + 2 Desviaciones Estándar", "Promedio - 2 Desviaciones Estándar"],
+            default=["Promedio + 2 Desviaciones Estándar"]
         )
-        if ref_option == "Promedio - 2 Desviaciones Estándar":
-            gw_ref_method = 'mean_minus_2std'
 
     st.markdown(f"""
     Sube tu archivo Excel con los datos de monitoreo de **{success_msg_prefix}**. 
@@ -168,13 +167,21 @@ def water_quality_module(module_type="surface"):
 
                     # --- GROUNDWATER SPECIFIC LOGIC ---
                     if module_type == "groundwater":
-                         # Calculate Reference Statistics per Parameter
-                         df_final['lim_referencia_gw'] = None # Initialize
-                         for param in df_final['parametro'].unique():
-                             mask = df_final['parametro'] == param
-                             subset = df_final[mask]
-                             ref_val = calculate_reference_statistics(subset, method=gw_ref_method)
-                             df_final.loc[mask, 'lim_referencia_gw'] = ref_val
+                        # Calculate Reference Statistics per Parameter
+                        df_final['lim_referencia_gw_sup'] = None
+                        df_final['lim_referencia_gw_inf'] = None
+                        
+                        for param in df_final['parametro'].unique():
+                            mask = df_final['parametro'] == param
+                            subset = df_final[mask]
+                            
+                            # Calculate both always, so they are available if selected later or now? 
+                            # Actually sticking to calculating everything is cleaner.
+                            ref_val_sup = calculate_reference_statistics(subset, method='mean_plus_2std')
+                            ref_val_inf = calculate_reference_statistics(subset, method='mean_minus_2std')
+                            
+                            df_final.loc[mask, 'lim_referencia_gw_sup'] = ref_val_sup
+                            df_final.loc[mask, 'lim_referencia_gw_inf'] = ref_val_inf
                     
                     st.success(f"Archivo de {success_msg_prefix} cargado con éxito. {len(df_final)} registros procesados.")
                     
@@ -226,9 +233,14 @@ def water_quality_module(module_type="surface"):
                             selected_cols = None
                             st.sidebar.info("No se encontraron normativas en el archivo.")
                     else:
-                        # For Groundwater, automatically select the reference column
-                        selected_cols = ['lim_referencia_gw']
-                        st.sidebar.info(f"Se mostrará el Valor Referencial ({ref_option}).")
+                        # For Groundwater, filter based on user selection
+                        selected_cols = []
+                        if "Promedio + 2 Desviaciones Estándar" in gw_ref_options:
+                            selected_cols.append('lim_referencia_gw_sup')
+                        if "Promedio - 2 Desviaciones Estándar" in gw_ref_options:
+                            selected_cols.append('lim_referencia_gw_inf')
+                            
+                        st.sidebar.info(f"Mostrando {len(selected_cols)} niveles de referencia.")
                     
                     # --- CUSTOMIZATION CONTROLS ---
                     st.sidebar.markdown("---")
