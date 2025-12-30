@@ -14,7 +14,8 @@ except:
 def format_number(val):
     if pd.isna(val):
         return "NaN"
-    return locale.format_string("%g", val)
+    # Force comma decimal separator regardless of system locale
+    return locale.format_string("%g", val).replace(".", ",")
 
 def format_percent(val):
     if val is None or pd.isna(val):
