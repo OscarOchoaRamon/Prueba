@@ -3,7 +3,14 @@ import numpy as np
 import os
 import locale
 
-locale.setlocale(locale.LC_NUMERIC, "Spanish_Spain")  # en Windows
+# Configuración del locale para usar comas decimales (Windows y Linux)
+try:
+    locale.setlocale(locale.LC_NUMERIC, "Spanish_Spain")
+except:
+    try:
+        locale.setlocale(locale.LC_NUMERIC, "es_ES.UTF-8")
+    except:
+        pass
 
 # =====================================================
 # CONFIGURACIÓN
