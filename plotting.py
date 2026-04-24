@@ -50,7 +50,7 @@ def create_chart(df, parameter, selected_columns=None, date_angle=-90, date_form
             
         fig.add_trace(go.Scatter(
             x=station_data['fecha'],
-            y=station_data['valor'],
+            y=station_data.get('valor_num', station_data['valor']),
             mode='markers',
             name=station,
             marker=dict(
@@ -61,7 +61,7 @@ def create_chart(df, parameter, selected_columns=None, date_angle=-90, date_form
         
     # 2. Add Regulation Lines
     # Identify regulation columns
-    limit_cols = [col for col in df.columns if col.startswith('lim_') or col.startswith('ISGQ') or col.startswith('PEL')]
+    limit_cols = [col for col in df.columns if col.startswith('lim_') or col.startswith('ISQG') or col.startswith('PEL')]
     
     # Filter if user selected specific ones
     if selected_columns is not None:
@@ -149,9 +149,9 @@ def create_chart(df, parameter, selected_columns=None, date_angle=-90, date_form
             category = " ".join(parts[2:]).replace("_", " ").lower()
 
         # --- SEDIMENTS LABELS ---
-        elif 'ISGQ' in col_name or 'PEL' in col_name:
-             # ISGQ_freshwater -> parts: ['ISGQ', 'freshwater']
-             reg_body = parts[0] # ISGQ or PEL
+        elif 'ISQG' in col_name or 'PEL' in col_name:
+             # ISQG_freshwater -> parts: ['ISQG', 'freshwater']
+             reg_body = parts[0] # ISQG or PEL
              category = " ".join(parts[1:]).capitalize() # freshwater -> Freshwater
              
              prefix = "" # No Lim. inf./sup. prefix for these usually
@@ -275,7 +275,7 @@ def create_chart(df, parameter, selected_columns=None, date_angle=-90, date_form
                     color = 'rgba(255, 0, 0, 0.5)'
 
             # --- SEDIMENTS STYLES ---
-            elif 'isgq' in col_lower:
+            elif 'isqg' in col_lower:
                 color = 'purple'
                 dash = 'dashdot' # -.
             
@@ -439,6 +439,8 @@ def create_chart(df, parameter, selected_columns=None, date_angle=-90, date_form
     fig.update_layout(font=dict(family="Bookman Old Style, serif", size=9, color="black"))
     
     return fig
+
+
 
 
 

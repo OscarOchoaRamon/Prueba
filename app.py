@@ -2,9 +2,12 @@ import streamlit as st
 
 from processing import load_data, clean_data, merge_data, get_regulation_groups, calculate_reference_statistics
 from plotting import create_chart
-from text_generation import generate_text_surface, generate_text_groundwater, generate_text_effluents, generate_text_sediments
 import os
 import shutil
+import texto_calidad_agua_superficial
+import texto_calidad_agua_subterránea
+import texto_calidad_efluente
+import texto_calidad_sedimentos
 
 # --- CUSTOM FONT REGISTRATION ---
 # --- CUSTOM FONT REGISTRATION ---
@@ -291,32 +294,8 @@ def water_quality_module(module_type="surface"):
                     )
                     selected_symbol_style = symbol_options[selected_symbol_label]
                     
-                    # 4. Visualization & Text
+                    # 4. Visualization
                     if selected_param:
-                        # FILTER SUBSET
-                        subset = df_final[df_final['parametro'] == selected_param]
-                        
-                        # --- GENERATE TEXT ---
-                        st.subheader("Análisis de Resultados")
-                        generated_text = ""
-                        try:
-                            if module_type == "surface":
-                                generated_text = generate_text_surface(subset, selected_cols if selected_cols else [])
-                            elif module_type == "groundwater":
-                                # Determine bool flags
-                                show_sup = "Promedio + 2 Desviaciones Estándar" in gw_ref_options
-                                show_inf = "Promedio - 2 Desviaciones Estándar" in gw_ref_options
-                                generated_text = generate_text_groundwater(subset, calc_ref_alto=show_sup, calc_ref_bajo=show_inf)
-                            elif module_type == "effluents":
-                                generated_text = generate_text_effluents(subset, selected_cols if selected_cols else [])
-                            elif module_type == "sediments":
-                                generated_text = generate_text_sediments(subset, selected_cols if selected_cols else [])
-                                
-                            if generated_text:
-                                st.markdown(generated_text)
-                        except Exception as e_text:
-                            st.error(f"Error generando texto: {e_text}")
-
                         # Pass the filtered columns AND styling options to the plotting function
                         fig = create_chart(
                             df_final, 
@@ -350,6 +329,61 @@ def water_quality_module(module_type="surface"):
                                 st.plotly_chart(fig, use_container_width=False)
                         else:
                             st.warning("No hay datos para graficar con este parámetro.")
+                            
+                    # --- GENERAR TEXTO ---
+                    if selected_param:
+                        st.markdown("### Interpretación")
+                        try:
+                            param_group = df_final[df_final['parametro'] == selected_param]
+                            texto_generado = ""
+                            
+                            if module_type == "surface":
+                                # Resetear variables globales
+                                for var in dir(texto_calidad_agua_superficial):
+                                    if var.startswith("ECA_") or var.startswith("LGA_"):
+                                        setattr(texto_calidad_agua_superficial, var, False)
+                                # Activar las seleccionadas
+                                if selected_standards:
+                                    for std in selected_standards:
+                                        if std.startswith("ECA"):
+                                            var_name = std.replace("ECA ", "ECA_").replace(" ", "_CAT_", 1).replace(" ", "_")
+                                            if hasattr(texto_calidad_agua_superficial, var_name):
+                                                setattr(texto_calidad_agua_superficial, var_name, True)
+                                        elif std.startswith("LGA"):
+                                            var_name = std.replace(" ", "_")
+                                            if hasattr(texto_calidad_agua_superficial, var_name):
+                                                setattr(texto_calidad_agua_superficial, var_name, True)
+                                texto_generado = texto_calidad_agua_superficial.generar_texto(param_group)
+                                
+                            elif module_type == "effluents":
+                                texto_calidad_efluente.NMP_MINERO = False
+                                texto_calidad_efluente.LMP_2010_DOMESTICO = False
+                                texto_calidad_efluente.LMP_2010_MINERO = False
+                                if selected_standards:
+                                    for std in selected_standards:
+                                        var_name = std.replace(" ", "_")
+                                        if hasattr(texto_calidad_efluente, var_name):
+                                            setattr(texto_calidad_efluente, var_name, True)
+                                texto_generado = texto_calidad_efluente.generar_texto(param_group)
+                                
+                            elif module_type == "sediments":
+                                texto_calidad_sedimentos.CCME_2001_FRESHWATER = False
+                                texto_calidad_sedimentos.CCME_2001_MARINE = False
+                                if selected_standards:
+                                    for std in selected_standards:
+                                        var_name = std.replace("CCME ", "CCME_2001_")
+                                        if hasattr(texto_calidad_sedimentos, var_name):
+                                            setattr(texto_calidad_sedimentos, var_name, True)
+                                texto_generado = texto_calidad_sedimentos.generar_texto(param_group)
+                                
+                            elif module_type == "groundwater":
+                                texto_calidad_agua_subterránea.CALCULAR_REF_ALTO = "Promedio + 2 Desviaciones Estándar" in gw_ref_options
+                                texto_calidad_agua_subterránea.CALCULAR_REF_BAJO = "Promedio - 2 Desviaciones Estándar" in gw_ref_options
+                                texto_generado = texto_calidad_agua_subterránea.generar_texto_subterranea(param_group)
+                                
+                            st.write(texto_generado)
+                        except Exception as e:
+                            st.error(f"Ocurrió un error al generar el texto: {e}")
                             
                     # 5. Data Table
                     with st.expander("Ver Datos Detallados"):
