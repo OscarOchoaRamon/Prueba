@@ -1,16 +1,6 @@
 import pandas as pd
 import numpy as np
 import os
-import locale
-
-# Configuración del locale para usar comas decimales (Windows y Linux)
-try:
-    locale.setlocale(locale.LC_NUMERIC, "Spanish_Spain")
-except:
-    try:
-        locale.setlocale(locale.LC_NUMERIC, "es_ES.UTF-8")
-    except:
-        pass
 
 # =====================================================
 # CONFIGURACIÓN
@@ -91,9 +81,10 @@ def generar_texto(grupo):
     minimo = min(valores_numericos)
     maximo = max(valores_numericos)
     promedio = sum(valores_numericos) / len(valores_numericos)
-    minimo = locale.format_string("%g",minimo)
-    maximo = locale.format_string("%g",maximo)
-    promedio = locale.format_string("%g",promedio)
+    # Formateo asegurando la coma decimal en cualquier sistema
+    minimo = ("%g" % minimo).replace('.', ',')
+    maximo = ("%g" % maximo).replace('.', ',')
+    promedio = ("%g" % promedio).replace('.', ',')
     
     #---- Texto de línea base ----
     if all(es_LD):

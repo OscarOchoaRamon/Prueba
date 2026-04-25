@@ -1,16 +1,6 @@
 import pandas as pd
 import numpy as np
 import os
-import locale
-
-# Configuración del locale para usar comas decimales (Windows)
-try:
-    locale.setlocale(locale.LC_NUMERIC, "Spanish_Spain")
-except:
-    try:
-        locale.setlocale(locale.LC_NUMERIC, "es_ES.UTF-8")
-    except:
-        pass
 
 # =====================================================
 # CONFIGURACIÓN
@@ -65,9 +55,10 @@ def generar_texto_subterranea(grupo):
     maximo_val = max(valores_num)
     
     # Formateo base %g
-    prom_t = locale.format_string("%g", promedio)
-    min_t = locale.format_string("%g", minimo_val)
-    max_t = locale.format_string("%g", maximo_val)
+    # Formateo asegurando la coma decimal en cualquier sistema
+    prom_t = ("%g" % promedio).replace('.', ',')
+    min_t = ("%g" % minimo_val).replace('.', ',')
+    max_t = ("%g" % maximo_val).replace('.', ',')
 
     # --- Texto de línea base ---
     ld_unicos = sorted(list(set([v.replace(".", ",") for v in grupo.loc[grupo['es_LD'], 'valor']])))
@@ -94,7 +85,7 @@ def generar_texto_subterranea(grupo):
         res_bajo = ""
 
         if CALCULAR_REF_ALTO:
-            ref_alto_t = locale.format_string("%g", ref_alto)
+            ref_alto_t = ("%g" % ref_alto).replace('.', ',')
             partes_intro.append(f"el promedio más dos veces la desviación estándar ({ref_alto_t} {unidad})")
             
             exceden = [v for v in valores_num if v > ref_alto]
@@ -109,7 +100,7 @@ def generar_texto_subterranea(grupo):
                 res_alto = f"{n_exc} ({porc_exc} %) de los registros exceden el valor de referencia alto"
 
         if CALCULAR_REF_BAJO:
-            ref_bajo_t = locale.format_string("%g", ref_bajo)
+            ref_bajo_t = ("%g" % ref_bajo).replace('.', ',')
             partes_intro.append(f"el promedio menos dos veces la desviación estándar ({ref_bajo_t} {unidad})")
             
             debajo = [v for v in valores_num if v < ref_bajo]

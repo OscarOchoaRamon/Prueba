@@ -1,17 +1,6 @@
 import pandas as pd
 import numpy as np
 import os
-import locale
-
-# Configuración del locale para usar comas decimales (Windows)
-try:
-    locale.setlocale(locale.LC_NUMERIC, "Spanish_Spain")
-except:
-    try:
-        locale.setlocale(locale.LC_NUMERIC, "es_ES.UTF-8")
-    except:
-        pass # Si falla el locale, continuará con puntos por defecto
-
 # =====================================================
 # 1. CONFIGURACIÓN DE RUTA Y ARCHIVOS
 # =====================================================
@@ -72,9 +61,10 @@ def generar_texto(grupo):
     prom_v = sum(valores_num) / len(valores_num)
     
     # Formateo con "%g" para coincidir exactamente con el código original
-    min_t = locale.format_string("%g", min_v)
-    max_t = locale.format_string("%g", max_v)
-    prom_t = locale.format_string("%g", prom_v)
+    # Formateo asegurando la coma decimal en cualquier sistema
+    min_t = ("%g" % min_v).replace('.', ',')
+    max_t = ("%g" % max_v).replace('.', ',')
+    prom_t = ("%g" % prom_v).replace('.', ',')
     
     # --- Texto de Línea Base ---
     ld_unicos = sorted(list(set([v.replace(".", ",") for v in grupo.loc[grupo['es_LD'], 'valor']])))
