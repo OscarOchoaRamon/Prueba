@@ -294,42 +294,6 @@ def water_quality_module(module_type="surface"):
                     )
                     selected_symbol_style = symbol_options[selected_symbol_label]
                     
-                    # 4. Visualization
-                    if selected_param:
-                        # Pass the filtered columns AND styling options to the plotting function
-                        fig = create_chart(
-                            df_final, 
-                            selected_param, 
-                            selected_columns=selected_cols,
-                            date_angle=selected_angle,
-                            date_format=selected_date_format,
-                            x_label_count=custom_x_labels,
-                            legend_position=legend_pos_options[selected_legend_pos],
-                            symbol_style=selected_symbol_style
-                        )
-                        
-                        if fig:
-                            # --- STATIC DISPLAY ---
-                            try:
-                                # Fixed dimensions for static preview
-                                img_bytes = fig.to_image(format="png", width=586, height=302, scale=3)
-                                
-                                st.image(img_bytes, caption=f"Vista Previa Estática: {selected_param}", output_format="PNG")
-                                
-                                # --- DOWNLOAD BUTTONS ---
-                                st.download_button(
-                                    label="📸 Descargar Imagen (PNG)",
-                                    data=img_bytes,
-                                    file_name=f"{selected_param}.png",
-                                    mime="image/png"
-                                )
-
-                            except Exception as e:
-                                st.error(f"Error generando visualización estática: {e}. Asegúrate de tener 'kaleido' instalado.")
-                                st.plotly_chart(fig, use_container_width=False)
-                        else:
-                            st.warning("No hay datos para graficar con este parámetro.")
-                            
                     # --- GENERAR TEXTO ---
                     if selected_param:
                         st.markdown("### Interpretación")
@@ -384,6 +348,42 @@ def water_quality_module(module_type="surface"):
                             st.write(texto_generado)
                         except Exception as e:
                             st.error(f"Ocurrió un error al generar el texto: {e}")
+
+                    # 4. Visualization
+                    if selected_param:
+                        # Pass the filtered columns AND styling options to the plotting function
+                        fig = create_chart(
+                            df_final, 
+                            selected_param, 
+                            selected_columns=selected_cols,
+                            date_angle=selected_angle,
+                            date_format=selected_date_format,
+                            x_label_count=custom_x_labels,
+                            legend_position=legend_pos_options[selected_legend_pos],
+                            symbol_style=selected_symbol_style
+                        )
+                        
+                        if fig:
+                            # --- STATIC DISPLAY ---
+                            try:
+                                # Fixed dimensions for static preview
+                                img_bytes = fig.to_image(format="png", width=586, height=302, scale=3)
+                                
+                                st.image(img_bytes, caption=f"Vista Previa Estática: {selected_param}", output_format="PNG")
+                                
+                                # --- DOWNLOAD BUTTONS ---
+                                st.download_button(
+                                    label="📸 Descargar Imagen (PNG)",
+                                    data=img_bytes,
+                                    file_name=f"{selected_param}.png",
+                                    mime="image/png"
+                                )
+
+                            except Exception as e:
+                                st.error(f"Error generando visualización estática: {e}. Asegúrate de tener 'kaleido' instalado.")
+                                st.plotly_chart(fig, use_container_width=False)
+                        else:
+                            st.warning("No hay datos para graficar con este parámetro.")
                             
                     # 5. Data Table
                     with st.expander("Ver Datos Detallados"):
