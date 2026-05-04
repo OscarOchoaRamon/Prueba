@@ -97,10 +97,13 @@ def generar_texto(grupo):
             return f" Al comparar los resultados obtenidos con el {nombre_limite} ({lim_f} {unidad}), se observa que {n_inc} ({porc_f} %) de los registros exceden el valor establecido."
 
     # --- Selección de columnas de normativa ---
+    if not CCME_2001_FRESHWATER and not CCME_2001_MARINE:
+        return "".join(texto_final)
+
     if CCME_2001_FRESHWATER:
         col_isqg, col_pel = "ISQG_freshwater", "PEL_freshwater"
         tipo_env = "sedimentos de agua dulce"
-    else:
+    elif CCME_2001_MARINE:
         col_isqg, col_pel = "ISQG_marine", "PEL_marine"
         tipo_env = "sedimentos marinos"
 
