@@ -29,27 +29,27 @@ def create_chart(df, parameter, selected_columns=None, date_angle=-90, date_form
     fig = go.Figure()
     
     # Define symbol sequence for "varied" option
-    # Plotly symbols list expanded to 33 elements to prevent duplicates for up to 30+ stations
+    # Combines filled and open shapes to maximize visual distinction, avoiding similar looking squares/rectangles
     symbol_sequence = [
-        'circle', 'square', 'diamond', 'cross', 'x', 
-        'triangle-up', 'triangle-down', 'star', 'hexagon', 'pentagon',
-        'triangle-left', 'triangle-right', 'octagon', 'star-triangle-up', 
-        'star-triangle-down', 'star-square', 'star-diamond', 'diamond-tall', 
-        'diamond-wide', 'hourglass', 'bowtie', 'circle-cross', 'circle-x', 
-        'square-cross', 'square-x', 'hexagram', 'hexagon2', 'asterisk', 
-        'hash', 'y-up', 'y-down', 'y-left', 'y-right'
+        'circle', 'square', 'diamond', 'triangle-up', 'pentagon', 
+        'hexagon', 'star', 'circle-open', 'square-open', 'diamond-open', 
+        'triangle-up-open', 'pentagon-open', 'hexagon-open', 'star-open', 'cross', 
+        'x', 'bowtie', 'hourglass', 'triangle-down', 'triangle-left', 
+        'triangle-right', 'triangle-down-open', 'triangle-left-open', 'triangle-right-open', 'asterisk', 
+        'hash', 'y-up', 'y-down', 'y-left', 'y-right', 
+        'octagon', 'octagon-open', 'hexagram'
     ]
     
-    # Define color sequence to prevent duplicates for up to 36 stations (Google & standard qualitative)
+    # Define color sequence to prevent duplicates for up to 32 stations.
+    # Uses highly distinct colors (Glasbey/Boynton/Kelly standard) for maximum human eye distinction.
     color_sequence = [
-        '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd',
-        '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf',
-        '#3366cc', '#dc3912', '#ff9900', '#109618', '#990099',
-        '#0099c6', '#dd4477', '#66aa00', '#b8292f', '#316395',
-        '#994499', '#22aa99', '#aaaa11', '#6633cc', '#e67300',
-        '#8b0707', '#651067', '#329262', '#5574a6', '#3b3eac',
-        '#b77333', '#f83a22', '#ffad46', '#12a14e', '#4285f4',
-        '#ea4335'
+        '#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231', 
+        '#911eb4', '#42d4f4', '#f032e6', '#bfef45', '#fabed4', 
+        '#469990', '#dcbeff', '#9a6324', '#fffac8', '#800000', 
+        '#aaffc3', '#808000', '#ffd8b1', '#000075', '#a9a9a9', 
+        '#333333', '#ffd700', '#ff7f50', '#87ceeb', '#228b22', 
+        '#ff69b4', '#dda0dd', '#40e0d0', '#d2691e', '#4682b4', 
+        '#7fff00', '#4b0082'
     ]
     
     # 1. Add Scatter Traces for each station
@@ -74,7 +74,7 @@ def create_chart(df, parameter, selected_columns=None, date_angle=-90, date_form
             mode='markers',
             name=station,
             marker=dict(
-                size=4.0, # Increased by 50% from 2.7
+                size=5.5, # Increased size to make open/filled shapes and colors clearly visible
                 symbol=marker_symbol,
                 color=marker_color
             ) 
