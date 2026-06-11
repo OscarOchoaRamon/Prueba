@@ -44,12 +44,12 @@ def create_chart(df, parameter, selected_columns=None, date_angle=-90, date_form
     # Uses highly distinct colors (Glasbey/Boynton/Kelly standard) for maximum human eye distinction.
     color_sequence = [
         '#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231', 
-        '#911eb4', '#42d4f4', '#f032e6', '#e6194b', '#fabed4', 
-        '#469990', '#dcbeff', '#9a6324', '#e6194b', '#800000', 
+        '#911eb4', '#42d4f4', '#f032e6', '#7fff00', '#fabed4', 
+        '#469990', '#dcbeff', '#9a6324', '#4b0082', '#800000', 
         '#aaffc3', '#808000', '#ffd8b1', '#000075', '#a9a9a9', 
-        '#333333', '#ffd700', '#ff7f50', '#87ceeb', '#e6194b', 
+        '#333333', '#ffd700', '#ff7f50', '#87ceeb', '#a87858', 
         '#ff69b4', '#dda0dd', '#40e0d0', '#d2691e', '#4682b4', 
-        '#7fff00', '#4b0082', '#e6194b'
+        '#7fff00', '#4b0082', '#04bbfc'
     ]
     
     # 1. Add Scatter Traces for each station
