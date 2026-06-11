@@ -1,7 +1,7 @@
 import plotly.graph_objects as go
 import pandas as pd
 
-def create_chart(df, parameter, selected_columns=None, date_angle=-90, date_format="MM-YY", x_label_count=0, legend_position="right", symbol_style="circle"):
+def create_chart(df, parameter, selected_columns=None, date_angle=-90, date_format="MM-YY", x_label_count=0, legend_position="right", symbol_style="circle", legend_size=None, legend_cols=None):
     """
     Creates an interactive Plotly chart for a specific parameter.
     Dynamically adds regulation lines found in the dataframe.
@@ -334,12 +334,22 @@ def create_chart(df, parameter, selected_columns=None, date_angle=-90, date_form
     # Legend Position & Margin Logic
     # We dynamically adjust font size and margins to fit all legend elements
     if legend_position == "bottom":
-        if total_legend_items <= 15:
-            font_size = 7.0
-        elif total_legend_items <= 25:
-            font_size = 6.5
+        if legend_size is not None:
+            font_size = legend_size
         else:
-            font_size = 6.0
+            if total_legend_items <= 15:
+                font_size = 7.0
+            elif total_legend_items <= 25:
+                font_size = 6.5
+            else:
+                font_size = 6.0
+            
+        if legend_cols is not None and legend_cols > 0:
+            entrywidth = int(480 / legend_cols)
+            cols_count = legend_cols
+        else:
+            entrywidth = 90
+            cols_count = 5
             
         legend_layout = dict(
             font=dict(family="Bookman Old Style, serif", size=font_size, color="black"),
@@ -349,22 +359,25 @@ def create_chart(df, parameter, selected_columns=None, date_angle=-90, date_form
             y=-0.25, # Pull it slightly closer to the axis
             xanchor="center",
             x=0.5,
-            entrywidth=90, # Size elements dynamically to pack them tightly
+            entrywidth=entrywidth, # Size elements based on requested columns count
             entrywidthmode="pixels"
         )
         
         # Adjust bottom margin dynamically based on estimated rows of legend
-        estimated_rows = max(1, (total_legend_items * 90) // 480 + 1)
+        estimated_rows = max(1, total_legend_items // cols_count + 1)
         margin = dict(l=50, r=50, t=20, b=max(70, 45 + estimated_rows * 12))
     else: # right (default)
-        if total_legend_items <= 12:
-            font_size = 7.0
-        elif total_legend_items <= 20:
-            font_size = 6.5
-        elif total_legend_items <= 30:
-            font_size = 6.0
+        if legend_size is not None:
+            font_size = legend_size
         else:
-            font_size = 5.5
+            if total_legend_items <= 12:
+                font_size = 7.0
+            elif total_legend_items <= 20:
+                font_size = 6.5
+            elif total_legend_items <= 30:
+                font_size = 6.0
+            else:
+                font_size = 5.5
             
         legend_layout = dict(
             font=dict(family="Bookman Old Style, serif", size=font_size, color="black"),
@@ -437,7 +450,7 @@ def create_chart(df, parameter, selected_columns=None, date_angle=-90, date_form
             elif delta_days <= 365 * 5: # 5 years -> Every 6 months
                 freq = '6MS'
             else: # > 5 years -> Yearly
-                freq = 'YS' # Year Start
+                freq = 'AS' # Year Start
                 
             tick_dates = pd.date_range(start=min_date, end=max_date, freq=freq)
         
