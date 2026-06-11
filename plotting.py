@@ -40,6 +40,18 @@ def create_chart(df, parameter, selected_columns=None, date_angle=-90, date_form
         'hash', 'y-up', 'y-down', 'y-left', 'y-right'
     ]
     
+    # Define color sequence to prevent duplicates for up to 36 stations (Google & standard qualitative)
+    color_sequence = [
+        '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd',
+        '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf',
+        '#3366cc', '#dc3912', '#ff9900', '#109618', '#990099',
+        '#0099c6', '#dd4477', '#66aa00', '#b8292f', '#316395',
+        '#994499', '#22aa99', '#aaaa11', '#6633cc', '#e67300',
+        '#8b0707', '#651067', '#329262', '#5574a6', '#3b3eac',
+        '#b77333', '#f83a22', '#ffad46', '#12a14e', '#4285f4',
+        '#ea4335'
+    ]
+    
     # 1. Add Scatter Traces for each station
     # Group by station
     stations = subset['estacion'].unique()
@@ -53,6 +65,9 @@ def create_chart(df, parameter, selected_columns=None, date_angle=-90, date_form
         else:
             marker_symbol = 'circle'
             
+        # Determine color from custom palette
+        marker_color = color_sequence[i % len(color_sequence)]
+            
         fig.add_trace(go.Scatter(
             x=station_data['fecha'],
             y=station_data.get('valor_num', station_data['valor']),
@@ -60,7 +75,8 @@ def create_chart(df, parameter, selected_columns=None, date_angle=-90, date_form
             name=station,
             marker=dict(
                 size=4.0, # Increased by 50% from 2.7
-                symbol=marker_symbol
+                symbol=marker_symbol,
+                color=marker_color
             ) 
         ))
         
