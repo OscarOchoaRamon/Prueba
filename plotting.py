@@ -67,122 +67,122 @@ def create_chart(df, parameter, selected_columns=None, date_angle=-90, date_form
     if selected_columns is not None:
         limit_cols = [col for col in limit_cols if col in selected_columns]
         
-    def get_legend_label(col_name, single_line=False):
-        """
-        Translates column name to specific multi-line legend label
-        matching requirements from original script.
-        E.g. lim_inf_eca_2017_3d1 -> 'Lím. inf. ECA-2017\nCat. 3-D1'
-        """
-        # 1. Determine Type (Inf/Sup)
-        if 'lim_inf_' in col_name:
-            prefix = "Lím. inf."
-            clean_col = col_name.replace('lim_inf_', '')
-        elif 'lim_sup_' in col_name:
-            prefix = "Lím. sup."
-            clean_col = col_name.replace('lim_sup_', '')
-        else:
-            prefix = "Lím."
-            clean_col = col_name.replace('lim_', '')
-            
-        # 2. Determine Regulation Body (ECA-2017, LGA, etc.)
-        # Common patterns: eca_2017_..., eca_2008_..., lga_...
-        
-        parts = clean_col.split('_')
-        
-        if parts[0] == 'lga':
-            reg_body = "LGA"
-            # categories like I, II, III
-            cat_part = parts[1] if len(parts) > 1 else ""
-            category = f"Cat. {cat_part}"
-            
-        elif parts[0] == 'eca':
-            # eca_2017_3d1 -> parts: ['eca', '2017', '3d1']
-            year = parts[1]
-            reg_body = f"ECA-{year}"
-            
-            # Category formatting is tricky: 3d1 -> 3-D1, 4e2_cys -> 4-E2 costa y sierra
-            # Let's join the rest
-            cat_raw = "_".join(parts[2:])
-            
-            # Specific Mappings for categories
-            # We can try to format generically: 3d1 -> 3-D1
-            # But 'cys' -> 'costa y sierra' needs explicit map
-            
-            cat_map = {
-                'cys': 'costa y sierra',
-                's': 'selva',
-                'e': 'estuario',
-                'm': 'mar'
-            }
-            
-            # Check for special suffixes
-            suffix_desc = ""
-            for k, v in cat_map.items():
-                if cat_raw.endswith(f"_{k}"):
-                     suffix_desc = f" {v}"
-                     cat_raw = cat_raw.replace(f"_{k}", "") # Remove suffix to format the code
-                     break
-            
-            # Format code like '3d1' -> '3-D1'
-            # Assuming pattern digit-letter-digit
-            if len(cat_raw) >= 3 and cat_raw[0].isdigit() and cat_raw[-1].isdigit():
-                 # 3d1 -> 3-D1
-                 code = f"{cat_raw[0]}-{cat_raw[1:].upper()}"
-                 category = f"Cat. {code}{suffix_desc}"
-            elif len(cat_raw) >= 3 and cat_raw[0].isdigit():
-                 # 4e1 -> 4-E1
-                 code = f"{cat_raw[0]}-{cat_raw[1:].upper()}"
-                 category = f"Cat. {code}{suffix_desc}"
+        def get_legend_label(col_name, single_line=False):
+            """
+            Translates column name to specific multi-line legend label
+            matching requirements from original script.
+            E.g. lim_inf_eca_2017_3d1 -> 'Lím. inf. ECA-2017\nCat. 3-D1'
+            """
+            # 1. Determine Type (Inf/Sup)
+            if 'lim_inf_' in col_name:
+                prefix = "L.inf." if single_line else "Lím. inf."
+                clean_col = col_name.replace('lim_inf_', '')
+            elif 'lim_sup_' in col_name:
+                prefix = "L.sup." if single_line else "Lím. sup."
+                clean_col = col_name.replace('lim_sup_', '')
             else:
-                 # Fallback
-                 category = f"Cat. {cat_raw.upper()}{suffix_desc}"
-
-        # --- EFFLUENTS LABELS ---
-        elif parts[0] == 'nmp':
-            reg_body = "NMP"
-            category = " ".join(parts[1:]).replace("_", " ").lower() # minero -> minero
-        
-        elif parts[0] == 'lmp':
-            # lmp_2010_domestico -> parts: ['lmp', '2010', 'domestico']
-            year = parts[1]
-            reg_body = f"LMP {year}"
-            category = " ".join(parts[2:]).replace("_", " ").lower()
-
-        # --- SEDIMENTS LABELS ---
-        elif 'ISQG' in col_name or 'PEL' in col_name:
-             # ISQG_freshwater -> parts: ['ISQG', 'freshwater']
-             reg_body = parts[0] # ISQG or PEL
-             category = " ".join(parts[1:]).capitalize() # freshwater -> Freshwater
-             
-             prefix = "" # No Lim. inf./sup. prefix for these usually
-             if single_line:
-                 return f"{reg_body} {category}"
-             return f"{reg_body}<br>{category}"
-
-        # --- GROUNDWATER REFERENCE ---
-        elif 'referencia_gw_sup' in col_name:
-            reg_body = "Valor Referencial"
-            category = "Promedio + 2 Desv. Est."
-            prefix = "" 
-            if single_line:
-                return f"{reg_body} {category}"
-            return f"{reg_body}<br>{category}"
+                prefix = "L." if single_line else "Lím."
+                clean_col = col_name.replace('lim_', '')
+                
+            # 2. Determine Regulation Body (ECA-2017, LGA, etc.)
+            # Common patterns: eca_2017_..., eca_2008_..., lga_...
             
-        elif 'referencia_gw_inf' in col_name:
-            reg_body = "Valor Referencial"
-            category = "Promedio - 2 Desv. Est."
-            prefix = "" 
-            if single_line:
-                return f"{reg_body} {category}"
-            return f"{reg_body}<br>{category}"
-
-        else:
-            reg_body = parts[0].upper()
-            category = " ".join(parts[1:]).upper()
+            parts = clean_col.split('_')
             
-        if single_line:
-            return f"{prefix} {reg_body} {category}"
-        return f"{prefix} {reg_body}<br>{category}" # Plotly uses <br> for newline
+            if parts[0] == 'lga':
+                reg_body = "LGA"
+                # categories like I, II, III
+                cat_part = parts[1] if len(parts) > 1 else ""
+                category = f"C.{cat_part}" if single_line else f"Cat. {cat_part}"
+                
+            elif parts[0] == 'eca':
+                # eca_2017_3d1 -> parts: ['eca', '2017', '3d1']
+                year = parts[1]
+                reg_body = f"ECA-{year[-2:]}" if single_line else f"ECA-{year}"
+                
+                # Category formatting is tricky: 3d1 -> 3-D1, 4e2_cys -> 4-E2 costa y sierra
+                # Let's join the rest
+                cat_raw = "_".join(parts[2:])
+                
+                # Specific Mappings for categories
+                # We can try to format generically: 3d1 -> 3-D1
+                # But 'cys' -> 'costa y sierra' needs explicit map
+                
+                cat_map = {
+                    'cys': 'costa y sierra',
+                    's': 'selva',
+                    'e': 'estuario',
+                    'm': 'mar'
+                }
+                
+                # Check for special suffixes
+                suffix_desc = ""
+                for k, v in cat_map.items():
+                    if cat_raw.endswith(f"_{k}"):
+                         suffix_desc = f" {v}"
+                         cat_raw = cat_raw.replace(f"_{k}", "") # Remove suffix to format the code
+                         break
+                
+                # Format code like '3d1' -> '3-D1'
+                # Assuming pattern digit-letter-digit
+                if len(cat_raw) >= 3 and cat_raw[0].isdigit() and cat_raw[-1].isdigit():
+                     # 3d1 -> 3-D1
+                     code = f"{cat_raw[0]}-{cat_raw[1:].upper()}"
+                     category = f"{code}{suffix_desc}" if single_line else f"Cat. {code}{suffix_desc}"
+                elif len(cat_raw) >= 3 and cat_raw[0].isdigit():
+                     # 4e1 -> 4-E1
+                     code = f"{cat_raw[0]}-{cat_raw[1:].upper()}"
+                     category = f"{code}{suffix_desc}" if single_line else f"Cat. {code}{suffix_desc}"
+                else:
+                     # Fallback
+                     category = f"{cat_raw.upper()}{suffix_desc}" if single_line else f"Cat. {cat_raw.upper()}{suffix_desc}"
+
+            # --- EFFLUENTS LABELS ---
+            elif parts[0] == 'nmp':
+                reg_body = "NMP"
+                category = "Min-96" if single_line else " ".join(parts[1:]).replace("_", " ").lower() # minero -> minero
+            
+            elif parts[0] == 'lmp':
+                # lmp_2010_domestico -> parts: ['lmp', '2010', 'domestico']
+                year = parts[1]
+                reg_body = f"LMP-{year[-2:]}" if single_line else f"LMP {year}"
+                category = "Dom" if "domestico" in col_name else ("Min" if "minero" in col_name else " ".join(parts[2:]).replace("_", " ").lower())
+
+            # --- SEDIMENTS LABELS ---
+            elif 'ISQG' in col_name or 'PEL' in col_name:
+                 # ISQG_freshwater -> parts: ['ISQG', 'freshwater']
+                 reg_body = parts[0] # ISQG or PEL
+                 category = "Fresh" if "freshwater" in col_name else ("Mar" if "marine" in col_name else " ".join(parts[1:]).capitalize())
+                 
+                 prefix = "" # No Lim. inf./sup. prefix for these usually
+                 if single_line:
+                     return f"{reg_body} {category}"
+                 return f"{reg_body}<br>{category}"
+
+            # --- GROUNDWATER REFERENCE ---
+            elif 'referencia_gw_sup' in col_name:
+                reg_body = "Valor Referencial"
+                category = "Promedio + 2 Desv. Est."
+                prefix = "" 
+                if single_line:
+                    return "Ref. Prom+2DE"
+                return f"{reg_body}<br>{category}"
+                
+            elif 'referencia_gw_inf' in col_name:
+                reg_body = "Valor Referencial"
+                category = "Promedio - 2 Desv. Est."
+                prefix = "" 
+                if single_line:
+                    return "Ref. Prom-2DE"
+                return f"{reg_body}<br>{category}"
+
+            else:
+                reg_body = parts[0].upper()
+                category = " ".join(parts[1:]).upper()
+                
+            if single_line:
+                return f"{prefix} {reg_body} {category}"
+            return f"{prefix} {reg_body}<br>{category}" # Plotly uses <br> for newline
 
     for col in limit_cols:
         # Get the single value for this parameter
@@ -349,12 +349,12 @@ def create_chart(df, parameter, selected_columns=None, date_angle=-90, date_form
             y=-0.25, # Pull it slightly closer to the axis
             xanchor="center",
             x=0.5,
-            entrywidth=0, # Size elements dynamically to pack them tightly
+            entrywidth=90, # Size elements dynamically to pack them tightly
             entrywidthmode="pixels"
         )
         
         # Adjust bottom margin dynamically based on estimated rows of legend
-        estimated_rows = max(1, (total_legend_items * 65) // 480 + 1)
+        estimated_rows = max(1, (total_legend_items * 90) // 480 + 1)
         margin = dict(l=50, r=50, t=20, b=max(70, 45 + estimated_rows * 12))
     else: # right (default)
         if total_legend_items <= 12:
@@ -437,7 +437,7 @@ def create_chart(df, parameter, selected_columns=None, date_angle=-90, date_form
             elif delta_days <= 365 * 5: # 5 years -> Every 6 months
                 freq = '6MS'
             else: # > 5 years -> Yearly
-                freq = 'YS' # Year Start
+                freq = 'AS' # Year Start
                 
             tick_dates = pd.date_range(start=min_date, end=max_date, freq=freq)
         
