@@ -67,7 +67,7 @@ def create_chart(df, parameter, selected_columns=None, date_angle=-90, date_form
     if selected_columns is not None:
         limit_cols = [col for col in limit_cols if col in selected_columns]
         
-    def get_legend_label(col_name):
+    def get_legend_label(col_name, single_line=False):
         """
         Translates column name to specific multi-line legend label
         matching requirements from original script.
@@ -155,6 +155,8 @@ def create_chart(df, parameter, selected_columns=None, date_angle=-90, date_form
              category = " ".join(parts[1:]).capitalize() # freshwater -> Freshwater
              
              prefix = "" # No Lim. inf./sup. prefix for these usually
+             if single_line:
+                 return f"{reg_body} {category}"
              return f"{reg_body}<br>{category}"
 
         # --- GROUNDWATER REFERENCE ---
@@ -162,18 +164,24 @@ def create_chart(df, parameter, selected_columns=None, date_angle=-90, date_form
             reg_body = "Valor Referencial"
             category = "Promedio + 2 Desv. Est."
             prefix = "" 
+            if single_line:
+                return f"{reg_body} {category}"
             return f"{reg_body}<br>{category}"
             
         elif 'referencia_gw_inf' in col_name:
             reg_body = "Valor Referencial"
             category = "Promedio - 2 Desv. Est."
             prefix = "" 
+            if single_line:
+                return f"{reg_body} {category}"
             return f"{reg_body}<br>{category}"
 
         else:
             reg_body = parts[0].upper()
             category = " ".join(parts[1:]).upper()
             
+        if single_line:
+            return f"{prefix} {reg_body} {category}"
         return f"{prefix} {reg_body}<br>{category}" # Plotly uses <br> for newline
 
     for col in limit_cols:
@@ -181,7 +189,7 @@ def create_chart(df, parameter, selected_columns=None, date_angle=-90, date_form
         val = subset[col].iloc[0]
         
         if pd.notna(val):
-            label = get_legend_label(col)
+            label = get_legend_label(col, single_line=(legend_position == "bottom"))
             
             # --- STYLE LOGIC ---
             # Defaults
@@ -310,33 +318,63 @@ def create_chart(df, parameter, selected_columns=None, date_angle=-90, date_form
     # Width: 15.5 cm * 37.8 = 586 px
     # Height: 8 cm * 37.8 = 302 px
     
-    # Legend Position Logic
-    legend_layout = dict(
-        font=dict(family="Bookman Old Style, serif", size=7, color="black"),
-        title=dict(text="")
-    )
-    
+    # Count how many legend items there will be to determine dynamic layout
+    stations = subset['estacion'].unique()
+    num_stations = len(stations)
+    num_limits = 0
+    for col in limit_cols:
+        val = subset[col].iloc[0]
+        if pd.notna(val):
+            num_limits += 1
+    total_legend_items = num_stations + num_limits
+
     # Margin adjustments based on legend
     margin = dict(l=50, r=50, t=20, b=50)
-    
+
+    # Legend Position & Margin Logic
+    # We dynamically adjust font size and margins to fit all legend elements
     if legend_position == "bottom":
-        legend_layout.update(dict(
+        if total_legend_items <= 15:
+            font_size = 7.0
+        elif total_legend_items <= 25:
+            font_size = 6.5
+        else:
+            font_size = 6.0
+            
+        legend_layout = dict(
+            font=dict(family="Bookman Old Style, serif", size=font_size, color="black"),
+            title=dict(text=""),
             orientation="h",
             yanchor="top",
-            y=-0.3, # Push it below x-axis
+            y=-0.25, # Pull it slightly closer to the axis
             xanchor="center",
-            x=0.5
-        ))
-        # Increase bottom margin to accommodate legend
-        margin['b'] = 100 
+            x=0.5,
+            entrywidth=0, # Size elements dynamically to pack them tightly
+            entrywidthmode="pixels"
+        )
+        
+        # Adjust bottom margin dynamically based on estimated rows of legend
+        estimated_rows = max(1, (total_legend_items * 65) // 480 + 1)
+        margin = dict(l=50, r=50, t=20, b=max(70, 45 + estimated_rows * 12))
     else: # right (default)
-        legend_layout.update(dict(
+        if total_legend_items <= 12:
+            font_size = 7.0
+        elif total_legend_items <= 20:
+            font_size = 6.5
+        elif total_legend_items <= 30:
+            font_size = 6.0
+        else:
+            font_size = 5.5
+            
+        legend_layout = dict(
+            font=dict(family="Bookman Old Style, serif", size=font_size, color="black"),
+            title=dict(text=""),
             orientation="v",
             yanchor="top",
             y=1,
             xanchor="left",
             x=1.02
-        ))
+        )
     
     fig.update_layout(
         # Title removed as requested
@@ -399,7 +437,7 @@ def create_chart(df, parameter, selected_columns=None, date_angle=-90, date_form
             elif delta_days <= 365 * 5: # 5 years -> Every 6 months
                 freq = '6MS'
             else: # > 5 years -> Yearly
-                freq = 'YS' # Year Start
+                freq = 'AS' # Year Start
                 
             tick_dates = pd.date_range(start=min_date, end=max_date, freq=freq)
         
