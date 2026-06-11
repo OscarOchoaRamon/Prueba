@@ -29,10 +29,15 @@ def create_chart(df, parameter, selected_columns=None, date_angle=-90, date_form
     fig = go.Figure()
     
     # Define symbol sequence for "varied" option
-    # Plotly symbols: circle, square, diamond, cross, x, triangle-up, triangle-down, etc.
+    # Plotly symbols list expanded to 33 elements to prevent duplicates for up to 30+ stations
     symbol_sequence = [
         'circle', 'square', 'diamond', 'cross', 'x', 
-        'triangle-up', 'triangle-down', 'star', 'hexagon', 'pentagon'
+        'triangle-up', 'triangle-down', 'star', 'hexagon', 'pentagon',
+        'triangle-left', 'triangle-right', 'octagon', 'star-triangle-up', 
+        'star-triangle-down', 'star-square', 'star-diamond', 'diamond-tall', 
+        'diamond-wide', 'hourglass', 'bowtie', 'circle-cross', 'circle-x', 
+        'square-cross', 'square-x', 'hexagram', 'hexagon2', 'asterisk', 
+        'hash', 'y-up', 'y-down', 'y-left', 'y-right'
     ]
     
     # 1. Add Scatter Traces for each station
