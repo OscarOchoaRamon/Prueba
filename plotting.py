@@ -399,7 +399,7 @@ def create_chart(df, parameter, selected_columns=None, date_angle=-90, date_form
             elif delta_days <= 365 * 5: # 5 years -> Every 6 months
                 freq = '6MS'
             else: # > 5 years -> Yearly
-                freq = 'AS' # Year Start
+                freq = 'YS' # Year Start
                 
             tick_dates = pd.date_range(start=min_date, end=max_date, freq=freq)
         
