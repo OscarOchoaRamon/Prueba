@@ -268,17 +268,15 @@ def water_quality_module(module_type="surface"):
                         help="Ajusta el tamaño del texto de la leyenda en la gráfica."
                     )
                     
-                    # Legend Columns (only if Bottom is selected)
-                    selected_legend_cols = 5
-                    if legend_pos_options[selected_legend_pos] == "bottom":
-                        selected_legend_cols = st.sidebar.number_input(
-                            "Columnas de la Leyenda",
-                            min_value=1,
-                            max_value=10,
-                            value=5,
-                            step=1,
-                            help="Número de columnas en las que se dividirá la leyenda cuando está abajo."
-                        )
+                    # Legend Columns (only applied when position is Bottom)
+                    selected_legend_cols = st.sidebar.number_input(
+                        "Columnas de la Leyenda (Solo Abajo)",
+                        min_value=1,
+                        max_value=10,
+                        value=5,
+                        step=1,
+                        help="Número de columnas en las que se dividirá la leyenda cuando está en la parte inferior."
+                    )
                     
                     # Date Angle
                     angle_options = [0, 90, 45, -45, -90]
