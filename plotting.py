@@ -40,16 +40,16 @@ def create_chart(df, parameter, selected_columns=None, date_angle=-90, date_form
         'octagon', 'octagon-open', 'hexagram'
     ]
     
-    # Define color sequence to prevent duplicates for up to 32 stations.
+    # Define color sequence to prevent duplicates for up to 33 stations.
     # Uses highly distinct colors (Glasbey/Boynton/Kelly standard) for maximum human eye distinction.
     color_sequence = [
         '#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231', 
-        '#911eb4', '#42d4f4', '#f032e6', '#bfef45', '#fabed4', 
+        '#911eb4', '#42d4f4', '#f032e6', '#e6194b', '#fabed4', 
         '#469990', '#dcbeff', '#9a6324', '#fffac8', '#800000', 
         '#aaffc3', '#808000', '#ffd8b1', '#000075', '#a9a9a9', 
-        '#333333', '#ffd700', '#ff7f50', '#87ceeb', '#228b22', 
+        '#333333', '#ffd700', '#ff7f50', '#87ceeb', '#e6194b', 
         '#ff69b4', '#dda0dd', '#40e0d0', '#d2691e', '#4682b4', 
-        '#7fff00', '#4b0082'
+        '#7fff00', '#4b0082', '#e6194b'
     ]
     
     # 1. Add Scatter Traces for each station
