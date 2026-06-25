@@ -362,12 +362,20 @@ def water_quality_module(module_type="surface"):
                             texto_generado = ""
                             
                             if module_type == "surface":
+                                # 1. Apagamos todas las variables para limpiar la memoria antes de evaluar
                                 for var in dir(texto_calidad_agua_superficial):
-                                    if var.startswith("ECA_") or var.startswith("LGA_"):
+                                    if var.startswith("ECA_") or var.startswith("LGA_") or var == "OTROS":
                                         setattr(texto_calidad_agua_superficial, var, False)
+                                
+                                # 2. Asignamos el nombre personalizado que escribió el usuario en la interfaz
+                                texto_calidad_agua_superficial.NOMBRE_OTROS = custom_otros_name
+                                
+                                # 3. Recorremos las normativas seleccionadas para encender las banderas correspondientes
                                 if selected_standards:
                                     for std in selected_standards:
-                                        if std.startswith("ECA"):
+                                        if std == "Otros":
+                                            texto_calidad_agua_superficial.OTROS = True
+                                        elif std.startswith("ECA"):
                                             var_name = std.replace("ECA ", "ECA_").replace(" ", "_CAT_", 1).replace(" ", "_")
                                             if hasattr(texto_calidad_agua_superficial, var_name):
                                                 setattr(texto_calidad_agua_superficial, var_name, True)
@@ -375,6 +383,7 @@ def water_quality_module(module_type="surface"):
                                             var_name = std.replace(" ", "_")
                                             if hasattr(texto_calidad_agua_superficial, var_name):
                                                 setattr(texto_calidad_agua_superficial, var_name, True)
+                                                
                                 texto_generado = texto_calidad_agua_superficial.generar_texto(param_group)
                                 
                             elif module_type == "effluents":
