@@ -174,6 +174,9 @@ def create_chart(df, parameter, selected_columns=None, date_angle=-90, date_form
                 color, linestyle = ('purple' if 'isqg' in col_lower else 'red'), '-.'
             elif 'referencia_gw' in col_lower:
                 color, linestyle = 'red', ('--' if 'sup' in col_lower else ':')
+            # NUEVO ESTILO PARA OTROS (Naranja oscuro)
+            elif 'otros' in col_lower:
+                color, linestyle = 'darkorange', ('-' if 'lim_inf' in col_lower else '--')
 
             ax.axhline(y=val, color=color, linestyle=linestyle, alpha=alpha, label=label, linewidth=lw)
 
