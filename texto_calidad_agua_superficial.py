@@ -2403,6 +2403,42 @@ def generar_texto(grupo):
                 if porc_lga_vi not in (None, 0, 100):
                     parte1_lgavi.append(f"Por otro lado, al comparar los resultados obtenidos con la LGA para la categoría VI ({eca_formateado_1} {unidad}), se observa que {n_inc_lga_vi} ({str(porc_lga_vi).replace('.',',')} %) de los registros no cumplen con el valor establecido.")
                     texto.append(f" {parte1_lgavi[0]}")
+
+    if OTROS is True:
+        n_total_otros = len(valores_numericos)
+    
+        lim_inf_otros = grupo["lim_inf_otros"].iloc[0] if "lim_inf_otros" in grupo.columns else None
+        lim_sup_otros = grupo["lim_sup_otros"].iloc[0] if "lim_sup_otros" in grupo.columns else None
+        n_inc_otros = 0
+        
+        if pd.isna(lim_inf_otros) is not True or pd.isna(lim_sup_otros) is not True:
+            for v in valores_numericos:
+                if (lim_inf_otros is not None and v < lim_inf_otros) or (lim_sup_otros is not None and v > lim_sup_otros):
+                    n_inc_otros += 1
+            porc_otros = round(100 * n_inc_otros / n_total_otros, 2) # Con 2 decimales según tu ejemplo
+        else:
+            porc_otros = None
+            
+        if pd.notna(lim_inf_otros) and pd.notna(lim_sup_otros):
+            eca_formateado_otros = str(lim_inf_otros).replace(".", ",") + ' a '+ str(lim_sup_otros).replace(".", ",")
+        elif pd.isna(lim_inf_otros) and pd.notna(lim_sup_otros):
+            eca_formateado_otros = str(lim_sup_otros).replace(".", ",")
+        elif pd.notna(lim_inf_otros) and pd.isna(lim_sup_otros):
+            eca_formateado_otros = str(lim_inf_otros).replace(".", ",")
+        
+        if porc_otros is None:
+            texto.append(f" Cabe mencionar que no existen límites de {NOMBRE_OTROS} aplicables para este parámetro.")
+        else:
+            if porc_otros == 0:
+                texto.append(f" Al comparar los resultados obtenidos con el {NOMBRE_OTROS} ({eca_formateado_otros} {unidad}), se observa que todos los registros cumplen con el valor establecido.")
+            elif porc_otros == 100:
+                texto.append(f" Al comparar los resultados obtenidos con el {NOMBRE_OTROS} ({eca_formateado_otros} {unidad}), se observa que todos los registros no cumplen con el valor establecido.")          
+            else:
+                parte1_otros = []                
+                if porc_otros not in (None, 0, 100):
+                    # Frase exacta como solicitaste
+                    parte1_otros.append(f"Al comparar los resultados obtenidos con el {NOMBRE_OTROS} ({eca_formateado_otros} {unidad}), se observa que {n_inc_otros} ({str(porc_otros).replace('.',',')} %) de los registros no cumplen con el valor establecido.")
+                    texto.append(f" {parte1_otros[0]}")
                     
     return "".join(texto)
     
