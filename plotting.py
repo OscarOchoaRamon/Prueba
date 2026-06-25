@@ -139,6 +139,10 @@ def create_chart(df, parameter, selected_columns=None, date_angle=-90, date_form
             reg_body = "Valor Referencial"
             category = "Promedio + 2 Desv. Est." if 'sup' in col_name else "Promedio - 2 Desv. Est."
             return "Ref. Prom+2DE" if single_line and 'sup' in col_name else ("Ref. Prom-2DE" if single_line else f"{reg_body}\n{category}")
+        # NUEVA REGLA PARA OTROS
+        elif 'otros' in clean_col.lower():
+            reg_body = custom_otros_name
+            return f"{prefix} {reg_body}"
         else:
             reg_body, category = parts[0].upper(), " ".join(parts[1:]).upper()
 
