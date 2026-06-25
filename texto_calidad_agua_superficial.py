@@ -77,6 +77,10 @@ ECA_2017_CAT_4E2_S = False
 ECA_2017_CAT_4E3_E = False
 ECA_2017_CAT_4E3_M = False
 
+# NUEVAS VARIABLES PARA "OTROS"
+OTROS = False
+NOMBRE_OTROS = "Otros"
+
 # =====================================================
 # LECTURA DE DATOS
 # =====================================================
