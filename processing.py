@@ -41,9 +41,14 @@ def clean_data(df):
     df['valor_num'] = float('nan')
     
     if mask_less.any():
-        clean_values = s_values.loc[mask_less].str.replace('<', '', regex=False)
+        clean_values = s_values.loc[mask_less].str.replace('<', '', regex=False).str.replace(',', '.', regex=False)
         numeric_values = pd.to_numeric(clean_values, errors='coerce')
         df.loc[mask_less, 'valor_num'] = numeric_values / 2.0
+        
+    df.loc[~mask_less, 'valor_num'] = pd.to_numeric(
+        df.loc[~mask_less, 'valor'].astype(str).str.replace(',', '.', regex=False),
+        errors='coerce'
+    )
         
     df.loc[~mask_less, 'valor_num'] = pd.to_numeric(df.loc[~mask_less, 'valor'], errors='coerce')
     

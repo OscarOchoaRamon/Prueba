@@ -1,6 +1,7 @@
 streamlit
 pandas
 plotly
+matplotlib
 openpyxl
 numpy
 kaleido==0.2.1

@@ -10,8 +10,6 @@ import texto_calidad_efluente
 import texto_calidad_sedimentos
 
 # --- CUSTOM FONT REGISTRATION ---
-# --- CUSTOM FONT REGISTRATION ---
-# --- CUSTOM FONT REGISTRATION ---
 # Attempt to register Bookman Old Style fonts if they exist
 # Windows filenames: BOOKOS.TTF (Regular), BOOKOSB.TTF (Bold), BOOKOSI.TTF (Italic), BOOKOSBI.TTF (Bold Italic)
 font_files = ["BOOKOS.TTF", "BOOKOSB.TTF", "BOOKOSI.TTF", "BOOKOSBI.TTF", "BookmanOldStyle.ttf"]
@@ -82,8 +80,6 @@ def landing_page():
             navigate_to('sediments')
             st.rerun()
 
-
-
 def water_quality_module(module_type="surface"):
     """
     Generic function to render the water quality module.
@@ -101,11 +97,6 @@ def water_quality_module(module_type="surface"):
         default_file = "bbdd_molde_efluentes.xlsx"
         reg_defaults_filter = [] # No smart filter for effluents defined yet, or default to all
         success_msg_prefix = "Efluentes"
-    elif module_type == "sediments":
-        title = "⛰️ Sedimentos - Comparativa CCME"
-        default_file = "bbdd_molde_sedimentos.xlsx"
-        reg_defaults_filter = [] # Defaults handled later
-        success_msg_prefix = "Sedimentos"
     elif module_type == "sediments":
         title = "⛰️ Sedimentos - Comparativa CCME"
         default_file = "bbdd_molde_sedimentos.xlsx"
@@ -144,6 +135,22 @@ def water_quality_module(module_type="surface"):
     La aplicación detectará automáticamente los valores y las líneas de referencia.
     """)
     
+    # --- Botón de descarga de plantilla ---
+    # Verifica si la plantilla existe en el repositorio/servidor antes de mostrar el botón
+    if os.path.exists(default_file):
+        with open(default_file, "rb") as file:
+            st.download_button(
+                label=f"📥 Descargar plantilla Excel ({success_msg_prefix})",
+                data=file,
+                file_name=default_file,
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                help="Descarga este molde, llénalo con tus datos de monitoreo y súbelo en el recuadro de abajo."
+            )
+    else:
+        # Mensaje de seguridad en caso de que el archivo no se haya subido a Github
+        st.warning(f"⚠️ El archivo de plantilla '{default_file}' no se encuentra disponible en el servidor en este momento.")
+    # ---------------------------------------------
+    
     # File Uploader
     uploaded_file = st.file_uploader("Cargar archivo Excel (.xlsx)", type=["xlsx"], key=f"uploader_{module_type}")
     
@@ -179,8 +186,6 @@ def water_quality_module(module_type="surface"):
                             mask = df_final['parametro'] == param
                             subset = df_final[mask]
                             
-                            # Calculate both always, so they are available if selected later or now? 
-                            # Actually sticking to calculating everything is cleaner.
                             ref_val_sup = calculate_reference_statistics(subset, method='mean_plus_2std')
                             ref_val_inf = calculate_reference_statistics(subset, method='mean_minus_2std')
                             
@@ -216,10 +221,8 @@ def water_quality_module(module_type="surface"):
                                     if any(f in name for f in reg_defaults_filter)
                                 ]
                             else:
-                                # For effluents, maybe default to all is safer initially?
                                 defaults = standard_names
 
-                            # Fallback if filter found nothing
                             if not defaults: 
                                 defaults = standard_names
 
@@ -229,7 +232,6 @@ def water_quality_module(module_type="surface"):
                                 default=defaults
                             )
                             
-                            # Flatten the selection back to a list of columns
                             selected_cols = []
                             for std in selected_standards:
                                 selected_cols.extend(reg_groups[std])
@@ -237,7 +239,6 @@ def water_quality_module(module_type="surface"):
                             selected_cols = None
                             st.sidebar.info("No se encontraron normativas en el archivo.")
                     else:
-                        # For Groundwater, filter based on user selection
                         selected_cols = []
                         if "Promedio + 2 Desviaciones Estándar" in gw_ref_options:
                             selected_cols.append('lim_referencia_gw_sup')
@@ -255,7 +256,7 @@ def water_quality_module(module_type="surface"):
                     selected_legend_pos = st.sidebar.selectbox(
                         "Posición de la Leyenda",
                         options=list(legend_pos_options.keys()),
-                        index=0
+                        index=1  # <-- CAMBIADO A 1 PARA QUE EL DEFAULT SEA "Abajo"
                     )
                     
                     # Legend Font Size
@@ -268,22 +269,34 @@ def water_quality_module(module_type="surface"):
                         help="Ajusta el tamaño del texto de la leyenda en la gráfica."
                     )
                     
-                    # Legend Columns (only applied when position is Bottom)
-                    selected_legend_cols = st.sidebar.number_input(
-                        "Columnas de la Leyenda (Solo Abajo)",
-                        min_value=1,
-                        max_value=10,
-                        value=5,
-                        step=1,
-                        help="Número de columnas en las que se dividirá la leyenda cuando está en la parte inferior."
+                    # Separación de la Leyenda
+                    selected_legend_spacing = st.sidebar.slider(
+                        "Separación de líneas en Leyenda",
+                        min_value=0.0,
+                        max_value=1.5,
+                        value=0.2,
+                        step=0.1,
+                        help="Controla el espacio vertical entre las líneas de la leyenda (0.2 es muy compacto)."
                     )
+                    
+                    # Columnas de Leyenda (Solo visible si la leyenda está abajo)
+                    selected_legend_cols = 5
+                    if legend_pos_options[selected_legend_pos] == "bottom":
+                        selected_legend_cols = st.sidebar.number_input(
+                            "Columnas de la Leyenda",
+                            min_value=1,
+                            max_value=10,
+                            value=5,
+                            step=1,
+                            help="Número de columnas en las que se dividirá la leyenda."
+                        )
                     
                     # Date Angle
                     angle_options = [0, 90, 45, -45, -90]
                     selected_angle = st.sidebar.selectbox(
                         "Ángulo de Etiquetas (Fechas)",
                         options=angle_options,
-                        index=4 
+                        index=2  # El índice 2 corresponde a 45 grados
                     )
                     
                     # Date Format
@@ -310,9 +323,26 @@ def water_quality_module(module_type="surface"):
                     selected_symbol_label = st.sidebar.selectbox(
                         "Símbolos de Estaciones",
                         options=list(symbol_options.keys()),
-                        index=0
+                        index=1  # <-- CAMBIADO A 1 PARA QUE EL DEFAULT SEA "Variado"
                     )
                     selected_symbol_style = symbol_options[selected_symbol_label]
+                    
+                    # Tamaño de los símbolos
+                    selected_symbol_size = st.sidebar.slider(
+                        "Tamaño de los Símbolos",
+                        min_value=1.0,
+                        max_value=15.0,
+                        value=3.0, 
+                        step=0.5,
+                        help="Ajusta el tamaño de los puntos de las estaciones en el gráfico."
+                    )
+
+                    #Escala logarítmica ---
+                    use_log_scale = st.sidebar.checkbox(
+                        "Escala logarítmica (Eje Y)",
+                        value=False,
+                        help="Aplica escala logarítmica al eje Y. Útil cuando los datos tienen rangos muy amplios."
+                    )
                     
                     # --- GENERAR TEXTO ---
                     if selected_param:
@@ -322,11 +352,9 @@ def water_quality_module(module_type="surface"):
                             texto_generado = ""
                             
                             if module_type == "surface":
-                                # Resetear variables globales
                                 for var in dir(texto_calidad_agua_superficial):
                                     if var.startswith("ECA_") or var.startswith("LGA_"):
                                         setattr(texto_calidad_agua_superficial, var, False)
-                                # Activar las seleccionadas
                                 if selected_standards:
                                     for std in selected_standards:
                                         if std.startswith("ECA"):
@@ -371,7 +399,6 @@ def water_quality_module(module_type="surface"):
 
                     # 4. Visualization
                     if selected_param:
-                        # Pass the filtered columns AND styling options to the plotting function
                         fig = create_chart(
                             df_final, 
                             selected_param, 
@@ -382,28 +409,47 @@ def water_quality_module(module_type="surface"):
                             legend_position=legend_pos_options[selected_legend_pos],
                             symbol_style=selected_symbol_style,
                             legend_size=selected_legend_size,
-                            legend_cols=selected_legend_cols
+                            legend_cols=selected_legend_cols,
+                            symbol_size=selected_symbol_size,        
+                            legend_spacing=selected_legend_spacing,
+                            log_scale=use_log_scale
                         )
                         
                         if fig:
-                            # --- STATIC DISPLAY ---
-                            try:
-                                # Fixed dimensions for static preview
-                                img_bytes = fig.to_image(format="png", width=586, height=302, scale=3)
-                                
-                                st.image(img_bytes, caption=f"Vista Previa Estática: {selected_param}", output_format="PNG")
-                                
-                                # --- DOWNLOAD BUTTONS ---
+                            import io
+                            
+                            # Generar buffer PNG
+                            buf_png = io.BytesIO()
+                            fig.savefig(buf_png, format="png", dpi=300, bbox_inches='tight', pad_inches=0.1)
+                            buf_png.seek(0)
+                            
+                            # Generar buffer SVG
+                            buf_svg = io.BytesIO()
+                            fig.savefig(buf_svg, format="svg", bbox_inches='tight', pad_inches=0.1)
+                            buf_svg.seek(0)
+                            
+                            st.image(buf_png, caption=f"Gráfico Generado: {selected_param}", output_format="PNG")
+                            
+                            # Mostrar botones de descarga en columnas
+                            col_down1, col_down2 = st.columns(2)
+                            
+                            with col_down1:
                                 st.download_button(
                                     label="📸 Descargar Imagen (PNG)",
-                                    data=img_bytes,
+                                    data=buf_png.getvalue(),
                                     file_name=f"{selected_param}.png",
-                                    mime="image/png"
+                                    mime="image/png",
+                                    use_container_width=True
                                 )
-
-                            except Exception as e:
-                                st.error(f"Error generando visualización estática: {e}. Asegúrate de tener 'kaleido' instalado.")
-                                st.plotly_chart(fig, use_container_width=False)
+                                
+                            with col_down2:
+                                st.download_button(
+                                    label="🖼️ Descargar Vector (SVG)",
+                                    data=buf_svg.getvalue(),
+                                    file_name=f"{selected_param}.svg",
+                                    mime="image/svg+xml",
+                                    use_container_width=True
+                                )
                         else:
                             st.warning("No hay datos para graficar con este parámetro.")
                             
@@ -427,5 +473,3 @@ elif st.session_state['page'] == 'effluents':
     water_quality_module(module_type="effluents")
 elif st.session_state['page'] == 'sediments':
     water_quality_module(module_type="sediments")
-
-
