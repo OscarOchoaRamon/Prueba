@@ -110,22 +110,17 @@ def get_regulation_groups(df):
         
         # Sediment logic
         if 'ISQG' in col or 'PEL' in col:
-            # col might be 'ISQG_freshwater'
             parts = col.split('_')
-            # Assuming format TYPE_ENVIRONMENT (ISQG_freshwater)
             if len(parts) >= 2:
-                 # Group by Environment? Or just "CCME 2001" as the group?
-                 # content: CCME_2001_FRESHWATER = True/False
-                 # The user wants options like "CCME Freshwater", "CCME Marine"
-                 # parts[1] is freshwater/marine
                  friendly_name = f"CCME {parts[1].upper()}"
             else:
                  friendly_name = "CCME SEDIMENTOS"
+        # NUEVA LÓGICA PARA "OTROS"
+        elif 'otros' in name.lower():
+            friendly_name = "Otros"
         else:
-             # Standard logic
              friendly_name = name.replace('_', ' ').upper()
         
-        # Clean up some common artifacts if needed or keep it simple
         if friendly_name not in groups:
             groups[friendly_name] = []
         groups[friendly_name].append(col)
