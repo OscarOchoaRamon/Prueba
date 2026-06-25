@@ -231,6 +231,16 @@ def water_quality_module(module_type="surface"):
                                 standard_names,
                                 default=defaults
                             )
+
+                            # --- NUEVA LÓGICA DE INTERFAZ PARA "OTROS" ---
+                            custom_otros_name = "Otros"
+                            if selected_standards and "Otros" in selected_standards:
+                                custom_otros_name = st.sidebar.text_input(
+                                    "Nombre para la normativa 'Otros'", 
+                                    value="PIA Lauricocha",
+                                    help="Este nombre aparecerá en la leyenda del gráfico y en la interpretación."
+                                )
+                            # ---------------------------------------------
                             
                             selected_cols = []
                             for std in selected_standards:
@@ -412,7 +422,8 @@ def water_quality_module(module_type="surface"):
                             legend_cols=selected_legend_cols,
                             symbol_size=selected_symbol_size,        
                             legend_spacing=selected_legend_spacing,
-                            log_scale=use_log_scale
+                            log_scale=use_log_scale,
+                            custom_otros_name=custom_otros_name if 'custom_otros_name' in locals() else "Otros" # <--- NUEVO
                         )
                         
                         if fig:
