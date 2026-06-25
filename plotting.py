@@ -18,7 +18,7 @@ for font_file in font_files:
         except Exception:
             pass
 
-def create_chart(df, parameter, selected_columns=None, date_angle=-90, date_format="MM-YY", x_label_count=0, legend_position="right", symbol_style="circle", legend_size=7.0, legend_cols=5, symbol_size=3.0, legend_spacing=0.2, log_scale=False):
+def create_chart(df, parameter, selected_columns=None, date_angle=-90, date_format="MM-YY", x_label_count=0, legend_position="right", symbol_style="circle", legend_size=7.0, legend_cols=5, symbol_size=3.0, legend_spacing=0.2, log_scale=False, custom_otros_name="Otros"):
     
     # Filtrar datos
     subset = df[df['parametro'] == parameter].copy()
