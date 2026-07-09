@@ -61,6 +61,15 @@ def get_base_statistics_text(grupo):
         maximo = max(valores_numericos)
         promedio = sum(valores_numericos) / len(valores_numericos)
         
+        # --- NUEVO: Extraer los nombres de las estaciones ---
+        idx_min = valores_numericos.index(minimo)
+        idx_max = valores_numericos.index(maximo)
+        
+        # Asume que la columna se llama "estacion". Cámbialo si en tu Excel se llama distinto.
+        est_min = grupo["estacion"].iloc[idx_min] if "estacion" in grupo.columns else "Desconocida"
+        est_max = grupo["estacion"].iloc[idx_max] if "estacion" in grupo.columns else "Desconocida"
+        # ----------------------------------------------------
+
         min_t = format_number(minimo)
         max_t = format_number(maximo)
         
@@ -71,13 +80,16 @@ def get_base_statistics_text(grupo):
             prom_t = format_number(promedio)
     else:
         min_t, max_t, prom_t = "NaN", "NaN", "NaN"
+        est_min, est_max = "Desconocida", "Desconocida"
     
+    # --- NUEVO: Se agregaron (estación {est_min}) y (estación {est_max}) en los textos ---
     if all(es_LD_list):
         resumen = f"se encontraron por debajo del límite de detección ({', '.join(ld_unicos)} {unidad})"
     elif not any(es_LD_list):
-        resumen = f"variaron desde un mínimo igual a {min_t} {unidad} hasta un máximo igual a {max_t} {unidad}, contando con un valor promedio de {prom_t} {unidad}"
+        resumen = f"variaron desde un mínimo igual a {min_t} {unidad} (estación {est_min}) hasta un máximo igual a {max_t} {unidad} (estación {est_max}), contando con un valor promedio de {prom_t} {unidad}"
     else:
-        resumen = f"variaron desde por debajo del límite de detección ({', '.join(ld_unicos)} {unidad}) hasta un máximo igual a {max_t} {unidad}, con un valor promedio de {prom_t} {unidad}"
+        # Nota: Cuando hay valores menores al LD, el mínimo es el LD, por lo que solo ponemos la estación en el máximo.
+        resumen = f"variaron desde por debajo del límite de detección ({', '.join(ld_unicos)} {unidad}) hasta un máximo igual a {max_t} {unidad} (estación {est_max}), con un valor promedio de {prom_t} {unidad}"
 
     return f"Como se observa en el gráfico, los valores de {param} registrados en todas las estaciones {resumen}.", valores_numericos
 
