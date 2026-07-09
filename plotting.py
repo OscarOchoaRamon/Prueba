@@ -178,6 +178,12 @@ def create_chart(df, parameter, selected_columns=None, date_angle=-90, date_form
             elif 'otros' in col_lower:
                 color, linestyle = 'darkorange', ('-' if 'lim_inf' in col_lower else '--')
 
+            # --- NUEVA LÓGICA: SOBRESCRIBIR SI EL USUARIO ELIGIÓ UN COLOR/ESTILO ---
+            if custom_line_styles is not None and col in custom_line_styles:
+                color = custom_line_styles[col]['color']
+                linestyle = custom_line_styles[col]['linestyle']
+            # -----------------------------------------------------------------------
+
             ax.axhline(y=val, color=color, linestyle=linestyle, alpha=alpha, label=label, linewidth=lw)
 
     # 3. Formato de Ejes
