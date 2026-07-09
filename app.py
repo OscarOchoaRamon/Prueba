@@ -4,10 +4,7 @@ from processing import load_data, clean_data, merge_data, get_regulation_groups,
 from plotting import create_chart
 import os
 import shutil
-import texto_calidad_agua_superficial
-import texto_calidad_agua_subterránea
-import texto_calidad_efluente
-import texto_calidad_sedimentos
+import text_generation
 
 # --- CUSTOM FONT REGISTRATION ---
 # Attempt to register Bookman Old Style fonts if they exist
@@ -260,7 +257,7 @@ def water_quality_module(module_type="surface"):
                     # --- CUSTOMIZATION CONTROLS ---
                     st.sidebar.markdown("---")
                     st.sidebar.subheader("Personalización del Gráfico")
-
+                    
                     # --- NUEVO: COLORES Y ESTILOS DE LÍNEA PERSONALIZADOS ---
                     custom_line_styles = {}
                     with st.sidebar.expander("🎨 Colores y Estilos de Normativa"):
@@ -323,7 +320,7 @@ def water_quality_module(module_type="surface"):
                     selected_legend_pos = st.sidebar.selectbox(
                         "Posición de la Leyenda",
                         options=list(legend_pos_options.keys()),
-                        index=1  # <-- CAMBIADO A 1 PARA QUE EL DEFAULT SEA "Abajo"
+                        index=1
                     )
                     
                     # Legend Font Size
@@ -363,7 +360,7 @@ def water_quality_module(module_type="surface"):
                     selected_angle = st.sidebar.selectbox(
                         "Ángulo de Etiquetas (Fechas)",
                         options=angle_options,
-                        index=2  # El índice 2 corresponde a 45 grados
+                        index=2
                     )
                     
                     # Date Format
@@ -390,7 +387,7 @@ def water_quality_module(module_type="surface"):
                     selected_symbol_label = st.sidebar.selectbox(
                         "Símbolos de Estaciones",
                         options=list(symbol_options.keys()),
-                        index=1  # <-- CAMBIADO A 1 PARA QUE EL DEFAULT SEA "Variado"
+                        index=1
                     )
                     selected_symbol_style = symbol_options[selected_symbol_label]
                     
@@ -413,65 +410,24 @@ def water_quality_module(module_type="surface"):
                     
                     # --- GENERAR TEXTO ---
                     if selected_param:
-                        st.markdown("### Interpretación")
-                        try:
-                            param_group = df_final[df_final['parametro'] == selected_param]
-                            texto_generado = ""
-                            
+                        # --- GENERACIÓN DE TEXTO UNIFICADA ---
+                        df_param = df_final[df_final['parametro'] == selected_param]
+                        
+                        if not df_param.empty:
                             if module_type == "surface":
-                                # 1. Apagamos todas las variables para limpiar la memoria antes de evaluar
-                                for var in dir(texto_calidad_agua_superficial):
-                                    if var.startswith("ECA_") or var.startswith("LGA_") or var == "OTROS":
-                                        setattr(texto_calidad_agua_superficial, var, False)
-                                
-                                # 2. Asignamos el nombre personalizado que escribió el usuario en la interfaz
-                                texto_calidad_agua_superficial.NOMBRE_OTROS = custom_otros_name
-                                
-                                # 3. Recorremos las normativas seleccionadas para encender las banderas correspondientes
-                                if selected_standards:
-                                    for std in selected_standards:
-                                        if std == "Otros":
-                                            texto_calidad_agua_superficial.OTROS = True
-                                        elif std.startswith("ECA"):
-                                            var_name = std.replace("ECA ", "ECA_").replace(" ", "_CAT_", 1).replace(" ", "_")
-                                            if hasattr(texto_calidad_agua_superficial, var_name):
-                                                setattr(texto_calidad_agua_superficial, var_name, True)
-                                        elif std.startswith("LGA"):
-                                            var_name = std.replace(" ", "_")
-                                            if hasattr(texto_calidad_agua_superficial, var_name):
-                                                setattr(texto_calidad_agua_superficial, var_name, True)
-                                                
-                                texto_generado = texto_calidad_agua_superficial.generar_texto(param_group)
-                                
-                            elif module_type == "effluents":
-                                texto_calidad_efluente.NMP_MINERO = False
-                                texto_calidad_efluente.LMP_2010_DOMESTICO = False
-                                texto_calidad_efluente.LMP_2010_MINERO = False
-                                if selected_standards:
-                                    for std in selected_standards:
-                                        var_name = std.replace(" ", "_")
-                                        if hasattr(texto_calidad_efluente, var_name):
-                                            setattr(texto_calidad_efluente, var_name, True)
-                                texto_generado = texto_calidad_efluente.generar_texto(param_group)
-                                
-                            elif module_type == "sediments":
-                                texto_calidad_sedimentos.CCME_2001_FRESHWATER = False
-                                texto_calidad_sedimentos.CCME_2001_MARINE = False
-                                if selected_standards:
-                                    for std in selected_standards:
-                                        var_name = std.replace("CCME ", "CCME_2001_")
-                                        if hasattr(texto_calidad_sedimentos, var_name):
-                                            setattr(texto_calidad_sedimentos, var_name, True)
-                                texto_generado = texto_calidad_sedimentos.generar_texto(param_group)
-                                
+                                texto_interpretacion = text_generation.generate_text_surface(df_param, selected_cols)
                             elif module_type == "groundwater":
-                                texto_calidad_agua_subterránea.CALCULAR_REF_ALTO = "Promedio + 2 Desviaciones Estándar" in gw_ref_options
-                                texto_calidad_agua_subterránea.CALCULAR_REF_BAJO = "Promedio - 2 Desviaciones Estándar" in gw_ref_options
-                                texto_generado = texto_calidad_agua_subterránea.generar_texto_subterranea(param_group)
-                                
-                            st.write(texto_generado)
-                        except Exception as e:
-                            st.error(f"Ocurrió un error al generar el texto: {e}")
+                                calc_alto = "Promedio + 2 Desviaciones Estándar" in gw_ref_options
+                                calc_bajo = "Promedio - 2 Desviaciones Estándar" in gw_ref_options
+                                texto_interpretacion = text_generation.generate_text_groundwater(df_param, calc_ref_alto=calc_alto, calc_ref_bajo=calc_bajo)
+                            elif module_type == "effluents":
+                                texto_interpretacion = text_generation.generate_text_effluents(df_param, selected_cols)
+                            elif module_type == "sediments":
+                                texto_interpretacion = text_generation.generate_text_sediments(df_param, selected_cols)
+                            
+                            st.markdown("---")
+                            st.subheader("Interpretación")
+                            st.markdown(texto_interpretacion)
 
                     # 4. Visualization
                     if selected_param:
