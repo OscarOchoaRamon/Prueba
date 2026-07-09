@@ -34,23 +34,25 @@ def clean_data(df):
     """
     df = df.copy()
     
-    s_values = df['valor'].astype(str)
+    # --- LA SOLUCIÓN ---
+    # Reemplazamos globalmente las comas por puntos en toda la columna 'valor' como primer paso.
+    # Esto asegura que to_numeric no falle y que los scripts de texto no colapsen al usar float().
+    df['valor'] = df['valor'].astype(str).str.replace(',', '.', regex=False)
+    
+    s_values = df['valor']
     mask_less = s_values.str.contains('<', na=False)
     
     df['es_LD'] = mask_less
     df['valor_num'] = float('nan')
     
     if mask_less.any():
-        clean_values = s_values.loc[mask_less].str.replace('<', '', regex=False).str.replace(',', '.', regex=False)
+        clean_values = s_values.loc[mask_less].str.replace('<', '', regex=False)
         numeric_values = pd.to_numeric(clean_values, errors='coerce')
         df.loc[mask_less, 'valor_num'] = numeric_values / 2.0
         
-    df.loc[~mask_less, 'valor_num'] = pd.to_numeric(
-        df.loc[~mask_less, 'valor'].astype(str).str.replace(',', '.', regex=False),
-        errors='coerce'
-    )
-        
-    df.loc[~mask_less, 'valor_num'] = pd.to_numeric(df.loc[~mask_less, 'valor'], errors='coerce')
+    # Ahora la conversión es directa porque ya no hay comas. 
+    # (Se eliminó la línea redundante que sobrescribía la limpieza)
+    df.loc[~mask_less, 'valor_num'] = pd.to_numeric(s_values.loc[~mask_less], errors='coerce')
     
     df['valor_num'] = pd.to_numeric(df['valor_num'], errors='coerce')
     df = df.dropna(subset=['valor_num'])
