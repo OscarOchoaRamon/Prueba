@@ -260,6 +260,63 @@ def water_quality_module(module_type="surface"):
                     # --- CUSTOMIZATION CONTROLS ---
                     st.sidebar.markdown("---")
                     st.sidebar.subheader("Personalización del Gráfico")
+
+                    # --- NUEVO: COLORES Y ESTILOS DE LÍNEA PERSONALIZADOS ---
+                    custom_line_styles = {}
+                    with st.sidebar.expander("🎨 Colores y Estilos de Normativa"):
+                        if module_type != "groundwater" and selected_standards:
+                            for std in selected_standards:
+                                st.markdown(f"**{std}**")
+                                # Iterate through the columns grouped under this standard
+                                for col in reg_groups[std]:
+                                    # Assign friendly labels and sensible default colors
+                                    if "lim_inf" in col.lower():
+                                        lbl = "Lím. Inferior"
+                                        def_color = "#0000FF" # Azul
+                                        def_style_idx = 1     # Punteado (--)
+                                    elif "lim_sup" in col.lower():
+                                        lbl = "Lím. Superior"
+                                        def_color = "#FF0000" # Rojo
+                                        def_style_idx = 0     # Continuo (-)
+                                    elif "isqg" in col.lower():
+                                        lbl = "ISQG"
+                                        def_color = "#800080" # Morado
+                                        def_style_idx = 2     # Raya-punto (-.)
+                                    elif "pel" in col.lower():
+                                        lbl = "PEL"
+                                        def_color = "#FF8C00" # Naranja
+                                        def_style_idx = 0     # Continuo (-)
+                                    else:
+                                        lbl = "Límite"
+                                        def_color = "#008000" # Verde
+                                        def_style_idx = 0
+
+                                    c1, c2 = st.columns(2)
+                                    with c1:
+                                        chosen_color = st.color_picker(f"Color ({lbl})", value=def_color, key=f"c_{col}")
+                                    with c2:
+                                        ls_opts = {"Continuo (-)": "-", "Punteado (--)": "--", "Raya-punto (-.)": "-.", "Puntos (:)": ":"}
+                                        chosen_style_lbl = st.selectbox(f"Estilo ({lbl})", list(ls_opts.keys()), index=def_style_idx, key=f"s_{col}")
+                                        chosen_style = ls_opts[chosen_style_lbl]
+
+                                    custom_line_styles[col] = {"color": chosen_color, "linestyle": chosen_style}
+                                    
+                        elif module_type == "groundwater" and selected_cols:
+                            st.markdown("**Valores de Referencia**")
+                            for col in selected_cols:
+                                lbl = "Lím. Superior" if "sup" in col.lower() else "Lím. Inferior"
+                                def_color = "#FF0000" if "sup" in col.lower() else "#0000FF"
+                                
+                                c1, c2 = st.columns(2)
+                                with c1:
+                                    chosen_color = st.color_picker(f"Color ({lbl})", value=def_color, key=f"c_{col}")
+                                with c2:
+                                    ls_opts = {"Continuo (-)": "-", "Punteado (--)": "--", "Raya-punto (-.)": "-.", "Puntos (:)": ":"}
+                                    chosen_style_lbl = st.selectbox(f"Estilo ({lbl})", list(ls_opts.keys()), index=1, key=f"s_{col}")
+                                    chosen_style = ls_opts[chosen_style_lbl]
+                                    
+                                custom_line_styles[col] = {"color": chosen_color, "linestyle": chosen_style}
+                    # --------------------------------------------------------
                     
                     # Legend Position
                     legend_pos_options = {"Derecha": "right", "Abajo": "bottom"}
@@ -432,7 +489,8 @@ def water_quality_module(module_type="surface"):
                             symbol_size=selected_symbol_size,        
                             legend_spacing=selected_legend_spacing,
                             log_scale=use_log_scale,
-                            custom_otros_name=custom_otros_name if 'custom_otros_name' in locals() else "Otros" # <--- NUEVO
+                            custom_otros_name=custom_otros_name if 'custom_otros_name' in locals() else "Otros",
+                            custom_line_styles=custom_line_styles
                         )
                         
                         if fig:
