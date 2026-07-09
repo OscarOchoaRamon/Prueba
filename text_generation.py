@@ -39,7 +39,12 @@ def get_base_statistics_text(grupo):
         valores_raw = grupo['valor'].astype(str).tolist()
         
     es_LD_list = grupo["es_LD"].tolist()
-    valores_numericos = grupo["valor"].tolist()
+    
+    # --- SOLUCIÓN DEL ERROR AQUÍ ---
+    # Extraemos los datos de 'valor_num' (limpios y numéricos) en lugar de 'valor'
+    serie_limpia = grupo["valor_num"].dropna()
+    valores_numericos = serie_limpia.tolist()
+    # -------------------------------
     
     # 1. Unique LD values string
     ld_raw_values = []
@@ -56,18 +61,19 @@ def get_base_statistics_text(grupo):
     except:
         ld_unicos = sorted(list(set(ld_raw_values)))
     
-    if valores_numericos:
-        minimo = min(valores_numericos)
-        maximo = max(valores_numericos)
-        promedio = sum(valores_numericos) / len(valores_numericos)
+    if not serie_limpia.empty:
+        minimo = serie_limpia.min()
+        maximo = serie_limpia.max()
+        promedio = serie_limpia.mean()
         
-        # --- NUEVO: Extraer los nombres de las estaciones ---
-        idx_min = valores_numericos.index(minimo)
-        idx_max = valores_numericos.index(maximo)
+        # --- RECUPERAR ESTACIONES EXACTAS ---
+        # Buscamos en qué fila exacta ocurrió el mínimo y el máximo
+        idx_min = serie_limpia.idxmin()
+        idx_max = serie_limpia.idxmax()
         
-        est_min = grupo["estacion"].iloc[idx_min] if "estacion" in grupo.columns else "Desconocida"
-        est_max = grupo["estacion"].iloc[idx_max] if "estacion" in grupo.columns else "Desconocida"
-        # ----------------------------------------------------
+        est_min = grupo.loc[idx_min, "estacion"] if "estacion" in grupo.columns else "Desconocida"
+        est_max = grupo.loc[idx_max, "estacion"] if "estacion" in grupo.columns else "Desconocida"
+        # ------------------------------------
         
         min_t = format_number(minimo)
         max_t = format_number(maximo)
