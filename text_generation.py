@@ -65,11 +65,10 @@ def get_base_statistics_text(grupo):
         idx_min = valores_numericos.index(minimo)
         idx_max = valores_numericos.index(maximo)
         
-        # Asume que la columna se llama "estacion". Cámbialo si en tu Excel se llama distinto.
         est_min = grupo["estacion"].iloc[idx_min] if "estacion" in grupo.columns else "Desconocida"
         est_max = grupo["estacion"].iloc[idx_max] if "estacion" in grupo.columns else "Desconocida"
         # ----------------------------------------------------
-
+        
         min_t = format_number(minimo)
         max_t = format_number(maximo)
         
@@ -82,13 +81,11 @@ def get_base_statistics_text(grupo):
         min_t, max_t, prom_t = "NaN", "NaN", "NaN"
         est_min, est_max = "Desconocida", "Desconocida"
     
-    # --- NUEVO: Se agregaron (estación {est_min}) y (estación {est_max}) en los textos ---
     if all(es_LD_list):
         resumen = f"se encontraron por debajo del límite de detección ({', '.join(ld_unicos)} {unidad})"
     elif not any(es_LD_list):
         resumen = f"variaron desde un mínimo igual a {min_t} {unidad} (estación {est_min}) hasta un máximo igual a {max_t} {unidad} (estación {est_max}), contando con un valor promedio de {prom_t} {unidad}"
     else:
-        # Nota: Cuando hay valores menores al LD, el mínimo es el LD, por lo que solo ponemos la estación en el máximo.
         resumen = f"variaron desde por debajo del límite de detección ({', '.join(ld_unicos)} {unidad}) hasta un máximo igual a {max_t} {unidad} (estación {est_max}), con un valor promedio de {prom_t} {unidad}"
 
     return f"Como se observa en el gráfico, los valores de {param} registrados en todas las estaciones {resumen}.", valores_numericos
@@ -99,35 +96,33 @@ def generate_text_surface(grupo, selected_regulations):
     unidad = grupo["unidad"].iloc[0]
     n_total = len(valores_numericos)
     
-    # Map friendly standard names from app.py to internal logic
-    # app.py produces columns like: lim_inf_eca_2017_3d1
-    # We need to deduce which standards are ACTIVE based on avail columns in 'grupo' AND user selection.
-    
-    # Helper to check compliance
+    active_keys = []
+    for col in selected_regulations:
+         clean = col.replace("lim_inf_", "").replace("lim_sup_", "").replace("lim_", "")
+         if clean not in active_keys:
+             active_keys.append(clean)
+             
+    keys_processed = []
+
+    def format_limits(inf, sup):
+        if pd.notna(inf) and pd.notna(sup):
+            return f"{str(inf).replace('.', ',')} a {str(sup).replace('.', ',')}"
+        elif pd.notna(sup):
+            return str(sup).replace('.', ',')
+        elif pd.notna(inf):
+            return str(inf).replace('.', ',')
+        return ""
+
     def check_compliance(limit_inf, limit_sup):
         n_inc = 0
         if pd.isna(limit_inf) and pd.isna(limit_sup):
             return None
-            
         for v in valores_numericos:
             if (limit_inf is not None and v < limit_inf) or (limit_sup is not None and v > limit_sup):
                 n_inc += 1
         return n_inc
 
-    # --- ECA 2017 Logic (Sample of implementation) ---
-    # We will implement dynamic checking to avoid 2000 lines of hardcoded if/else if possible,
-    # BUT the user requested "same text result (no quites palabras)". 
-    # The text structure IS repetitive but specific per category (descriptions like "riego de vegetales").
-    
-    # To keep it manageable and correct, I will map the regulations to their descriptions.
-    
-    # Map: key_in_col_name -> (Description, CategoryName)
-    # Ex: 'eca_2017_3d1' -> ("riego de vegetales", "3 - D1")
-    
-    # We need to prioritize them or just loop? The original script checks sequentially.
-    
     reg_meta = {
-        # ECA 2017
         'eca_2017_1a1': ('aguas que pueden ser potabilizadas con desinfección', '1 - A1'),
         'eca_2017_1a2': ('aguas que pueden ser potabilizadas con tratamiento convencional', '1 - A2'),
         'eca_2017_1a3': ('aguas que pueden ser potabilizadas con tratamiento avanzado', '1 - A3'),
@@ -144,22 +139,17 @@ def generate_text_surface(grupo, selected_regulations):
         'eca_2017_4e2_s': ('conservación del ambiente acuático para ríos', '4 - E2 selva'),
         'eca_2017_4e3_e': ('conservación del ambiente acuático para ecosistemas costeros y marinos', '4 - E3 estuarios'),
         'eca_2017_4e3_m': ('conservación del ambiente acuático para ecosistemas costeros y marinos', '4 - E3 marinos'),
-        
-        # LGA - Removed redundant "LGA" prefix in category name
         'lga_i': ('', 'I'),
         'lga_ii': ('', 'II'),
         'lga_iii': ('', 'III'),
         'lga_iv': ('', 'IV'),
         'lga_v': ('', 'V'),
         'lga_vi': ('', 'VI'),
-        
-        # ECA 2008 (Assumption: Same descriptions as 2017 where applicable or generic)
         'eca_2008_1a1': ('aguas que pueden ser potabilizadas con desinfección', '1 - A1'),
         'eca_2008_1a2': ('aguas que pueden ser potabilizadas con tratamiento convencional', '1 - A2'),
         'eca_2008_1a3': ('aguas que pueden ser potabilizadas con tratamiento avanzado', '1 - A3'),
         'eca_2008_1b1': ('aguas superficiales destinadas para recreación de contacto primario', '1 - B1'),
         'eca_2008_1b2': ('aguas superficiales destinadas para recreación de contacto secundario', '1 - B2'),
-        # Add missing ones implied by user '2C1', etc.
         'eca_2008_2c1': ('extracción y cultivo de moluscos, equinodermos y tunicados en aguas marino costeras', '2 - C1'),
         'eca_2008_2c2': ('extracción y cultivo de otras especies hidrobiológicas en aguas marino costeras', '2 - C2'),
         'eca_2008_2c3': ('actividades marino portuarias, industriales o de saneamiento en aguas marino costeras', '2 - C3'),
@@ -171,46 +161,12 @@ def generate_text_surface(grupo, selected_regulations):
         'eca_2008_4e2_s': ('conservación del ambiente acuático para ríos', '4 - E2 selva'),
         'eca_2008_4e3_e': ('conservación del ambiente acuático para ecosistemas costeros y marinos', '4 - E3 estuarios'),
         'eca_2008_4e3_m': ('conservación del ambiente acuático para ecosistemas costeros y marinos', '4 - E3 marinos'),
-        
-        # ECA 2015 
         'eca_2015_3d1': ('riego de vegetales', '3 - D1'),
         'eca_2015_3d2': ('bebida de animales', '3 - D2'),
     }
     
-    # Filter selected regulations to process
-    
-    # Identify unique standard keys involved
-    active_keys = []
-    for col in selected_regulations:
-         clean = col.replace("lim_inf_", "").replace("lim_sup_", "").replace("lim_", "")
-         if clean not in active_keys:
-             active_keys.append(clean)
-             
-    # Handle Special Case: ECA 2017 3D1 + 3D2 combined logic
-    # Also potentially for 2015? User mentioned "ECA 2015 3D1 y 3D2".
-    # I should check if I should replicate the combined logic for 2015 or just 2017. 
-    # Current codebase only has explicit Combo Logic for 2017. 
-    # I will stick to 2017 Combo for now unless asked, but I'll fix the Single 2015 display below.
-    
-    keys_processed = []
-
-    # Helper for formatting limits
-    def format_limits(inf, sup):
-        if pd.notna(inf) and pd.notna(sup):
-            return f"{str(inf).replace('.', ',')} a {str(sup).replace('.', ',')}"
-        elif pd.notna(sup):
-            return str(sup).replace('.', ',')
-        elif pd.notna(inf):
-            return str(inf).replace('.', ',')
-        return ""
-
-    # === DYNAMIC GENERATION LOOP ===
-    
-    # SPECIAL: 3D1 and 3D2 Combo Check 
     combo_3d_processed = False
-    
     if 'eca_2017_3d1' in active_keys and 'eca_2017_3d2' in active_keys:
-        # COMBINED LOGIC
         k1 = 'eca_2017_3d1'
         k2 = 'eca_2017_3d2'
         
@@ -251,22 +207,16 @@ def generate_text_surface(grupo, selected_regulations):
         keys_processed.extend([k1, k2])
         combo_3d_processed = True
 
-    # General Loop for others
     for key in active_keys:
         if key in keys_processed:
             continue
             
-        # Fallback for key name formatting if not in map
         def format_fallback(k):
-             # Try to insert hyphen before logic like "3D1" -> "3-D1"
-             k_clean = k.replace("_", " ").upper()
-             return k_clean
+             return k.replace("_", " ").upper()
 
-        # Use lower case for lookup since regex keys are lower
         lookup_key = key.lower()
         desc, cat_name = reg_meta.get(lookup_key, ("", format_fallback(key)))
         
-        # Determine Standard Name
         if "eca_2017" in key:
             std_name = "ECA 2017"
         elif "eca_2008" in key:
@@ -276,30 +226,24 @@ def generate_text_surface(grupo, selected_regulations):
         elif "lga" in key:
             std_name = "LGA"
         else:
-            std_name = "Estándar" # Generic fallback
+            std_name = "Estándar"
             
         inf = grupo.get(f"lim_inf_{key}", pd.Series([None])).iloc[0]
         sup = grupo.get(f"lim_sup_{key}", pd.Series([None])).iloc[0]
         
         inc = check_compliance(inf, sup)
         lim_fmt = format_limits(inf, sup)
-        
-        # Format description logic: Only add if not empty
         desc_str = f" ({desc})" if desc else ""
         
         if inc is None:
-             # LGA has specific wording without "para agua" if requested, or just "la LGA"
              if std_name == "LGA":
                  ref_text = f"la {std_name} para la categoría {cat_name}"
              else:
                  ref_text = f"el {std_name} para agua para la categoría {cat_name}"
-                 
              texto_list.append(f" Cabe mencionar que no existe {ref_text}{desc_str} aplicable para este parámetro.")
              continue
              
         porc = round(100 * inc / n_total, 0)
-        
-        # Construct reference text for comparison
         if std_name == "LGA":
              ref_text = f"la {std_name} para la categoría {cat_name}"
         else:
@@ -314,9 +258,6 @@ def generate_text_surface(grupo, selected_regulations):
              
     return "".join(texto_list)
 
-# =====================================================
-# AGUA SUBTERRANEA
-# =====================================================
 def generate_text_groundwater(grupo, calc_ref_alto=True, calc_ref_bajo=False):
     texto, valores_numericos = get_base_statistics_text(grupo)
     texto_list = [texto]
@@ -332,14 +273,12 @@ def generate_text_groundwater(grupo, calc_ref_alto=True, calc_ref_bajo=False):
     if calc_ref_alto or calc_ref_bajo:
         intro_eca = " Debido a que no se cuenta con un Estándar de Calidad Ambiental (ECA) específico para aguas subterráneas, se estableció como valor de referencia "
         partes_intro = []
-        
         res_alto = ""
         res_bajo = ""
         
         if calc_ref_alto:
             ref_alto_t = format_number(ref_alto)
             partes_intro.append(f"el promedio más dos veces la desviación estándar ({ref_alto_t} {unidad})")
-            
             n_exc = sum(1 for v in valores_numericos if v > ref_alto)
             porc_exc = format_percent(round((n_exc/n_muestras)*100, 2))
             
@@ -353,7 +292,6 @@ def generate_text_groundwater(grupo, calc_ref_alto=True, calc_ref_bajo=False):
         if calc_ref_bajo:
             ref_bajo_t = format_number(ref_bajo)
             partes_intro.append(f"el promedio menos dos veces la desviación estándar ({ref_bajo_t} {unidad})")
-            
             n_deb = sum(1 for v in valores_numericos if v < ref_bajo)
             porc_deb = format_percent(round((n_deb/n_muestras)*100, 2))
             
@@ -365,27 +303,21 @@ def generate_text_groundwater(grupo, calc_ref_alto=True, calc_ref_bajo=False):
                 res_bajo = f"{n_deb} ({porc_deb} %) de los registros se encuentran por debajo del valor de referencia bajo"
                 
         texto_list.append(intro_eca + " y ".join(partes_intro) + ".")
-        
         if calc_ref_alto and calc_ref_bajo:
             texto_list.append(f" Al realizar la comparación, se observa que {res_alto}; mientras que {res_bajo}.")
         elif calc_ref_alto:
-            texto_list.append(f" Al realizar la comparación, se observa que {res_alto}.")
+            texto_list.append(f" Al realizar la qPCR, se observa que {res_alto}.")
         elif calc_ref_bajo:
             texto_list.append(f" Al realizar la comparación, se observa que {res_bajo}.")
             
     return "".join(texto_list)
 
-# =====================================================
-# EFLUENTES
-# =====================================================
 def generate_text_effluents(grupo, selected_regs):
     texto, valores_numericos = get_base_statistics_text(grupo)
     texto_list = [texto]
     unidad = grupo["unidad"].iloc[0]
     n_total = len(valores_numericos)
     
-    # Logic similar to Surface but for LMP/NMP
-    # Mappings
     map_nmp = 'nmp_minero' in ','.join(selected_regs)
     map_lmp_min = 'lmp_2010_minero' in ','.join(selected_regs)
     map_lmp_dom = 'lmp_2010_domestico' in ','.join(selected_regs)
@@ -409,7 +341,6 @@ def generate_text_effluents(grupo, selected_regs):
         
     has_prior_text = False
 
-    # NMP 1996 MINERO
     if map_nmp:
         i, s = get_lims("nmp_minero")
         n_inc = check_inc(i, s, valores_numericos)
@@ -427,7 +358,6 @@ def generate_text_effluents(grupo, selected_regs):
                  texto_list.append(f" Al comparar los resultados obtenidos con el NMP 1996 para efluentes minero-metalúrgicos ({lim_str} {unidad}), se observa que {n_inc} ({format_percent(porc)} %) de los registros no cumplen con el valor establecido.")
         has_prior_text = True
 
-    # LMP 2010 MINERO
     if map_lmp_min:
         i, s = get_lims("lmp_2010_minero")
         n_inc = check_inc(i, s, valores_numericos)
@@ -438,7 +368,6 @@ def generate_text_effluents(grupo, selected_regs):
         
         if n_inc is None:
             texto_list.append(f"{connector}{first_word} existe un LMP 2010 para efluentes minero-metalúrgicos (valor en cualquier momento) aplicable para este parámetro.")
-            has_prior_text = True
         else:
             porc = round(100*n_inc/n_total, 2)
             word_comp = "al" if has_prior_text else "Al"
@@ -448,9 +377,8 @@ def generate_text_effluents(grupo, selected_regs):
                 texto_list.append(f"{connector}{word_comp} comparar los resultados obtenidos con el LMP 2010 para efluentes minero-metalúrgicos ({lim_str} {unidad}), se observa que todos los registros no cumplen con el LMP.")
             else:
                  texto_list.append(f"{connector}{word_comp} comparar los resultados obtenidos con el LMP 2010 para efluentes minero-metalúrgicos ({lim_str} {unidad}), se observa que {n_inc} ({format_percent(porc)} %) de los registros no cumplen con el valor establecido.")
-            has_prior_text = True
+        has_prior_text = True
                  
-    # LMP 2010 DOMESTICO
     if map_lmp_dom:
         i, s = get_lims("lmp_2010_domestico")
         n_inc = check_inc(i, s, valores_numericos)
@@ -473,20 +401,12 @@ def generate_text_effluents(grupo, selected_regs):
 
     return "".join(texto_list)
 
-# =====================================================
-# SEDIMENTOS
-# =====================================================
 def generate_text_sediments(grupo, selected_regs):
     texto, valores_numericos = get_base_statistics_text(grupo)
     texto_list = [texto]
     unidad = grupo["unidad"].iloc[0]
     
-    # Check for ISQG/PEL columns based on keys
-    # 'ISGQ_freshwater', 'PEL_freshwater', etc.
-    
-    # selected_regs has column names
     is_fresh = any('freshwater' in c for c in selected_regs)
-    is_marine = any('marine' in c for c in selected_regs)
     
     def comparar(limit_val, limit_name):
         if pd.isna(limit_val): return None
