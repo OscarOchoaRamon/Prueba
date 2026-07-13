@@ -16,8 +16,11 @@ def obtener_estaciones_extremo(grupo, columna_valor, tipo="max"):
         return ""
     
     val_extremo = grupo[columna_valor].max() if tipo == "max" else grupo[columna_valor].min()
-    # Filtrar todas las filas que alcancen exactamente ese valor extremo
-    estaciones = grupo[grupo[columna_valor] == val_extremo]['estacion'].dropna().unique().tolist()
+    
+    # CORRECCIÓN: Convertimos explícitamente a str cada estación para evitar fallas si son números
+    estaciones = [
+        str(est) for est in grupo[grupo[columna_valor] == val_extremo]['estacion'].dropna().unique()
+    ]
     
     if not estaciones:
         return ""
@@ -27,7 +30,7 @@ def obtener_estaciones_extremo(grupo, columna_valor, tipo="max"):
     elif len(estaciones) == 2:
         return f" (estaciones {estaciones[0]} y {estaciones[1]})"
     else:
-        # Para 3 o más estaciones: "X, Y y Z"
+        # Para 3 o más estaciones: "X, Y y Z" sin importar si originalmente eran números
         return f" (estaciones {', '.join(estaciones[:-1])} y {estaciones[-1]})"
 
 def get_base_statistics_text(grupo, grafico_label="Gráfico XXX"):
