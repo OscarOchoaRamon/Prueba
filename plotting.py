@@ -157,9 +157,9 @@ def create_chart(df, parameter, selected_columns=None, date_angle=-90, date_form
             col_lower, color, linestyle, alpha, lw = col.lower(), 'black', '-', 1.0, 1.5
             
             if 'eca_2017_3d2' in col_lower:
-                color, linestyle, alpha = 'blue', ('--' if 'lim_inf' in col_lower else '-'), (1.0 if 'lim_inf' in col_lower else 0.5)
+                color, linestyle = 'blue', ('--' if 'lim_inf' in col_lower else '-')
             elif 'eca_2017' in col_lower:
-                color, linestyle, alpha = 'red', ('-' if 'lim_inf' in col_lower else '--'), (0.5 if 'lim_inf' in col_lower else 1.0)
+                color, linestyle = 'red', ('-' if 'lim_inf' in col_lower else '--')
             elif 'lga' in col_lower or 'eca_2008' in col_lower or 'eca_2015' in col_lower:
                 color, linestyle = 'green', (':' if 'lim_inf' in col_lower else '-.')
                 if 'eca_2015_3d2' in col_lower:
@@ -169,12 +169,10 @@ def create_chart(df, parameter, selected_columns=None, date_angle=-90, date_form
             elif 'lmp_2010' in col_lower:
                 color = 'green' if 'domestico' in col_lower else 'red'
                 linestyle = ':' if 'lim_inf' in col_lower and 'domestico' in col_lower else ('-' if 'domestico' in col_lower else ('-' if 'lim_inf' in col_lower else '--'))
-                alpha = 0.5 if 'lim_sup' in col_lower else 1.0
             elif 'isqg' in col_lower or 'pel' in col_lower:
                 color, linestyle = ('purple' if 'isqg' in col_lower else 'red'), '-.'
             elif 'referencia_gw' in col_lower:
                 color, linestyle = 'red', ('--' if 'sup' in col_lower else ':')
-            # NUEVO ESTILO PARA OTROS (Naranja oscuro)
             elif 'otros' in col_lower:
                 color, linestyle = 'darkorange', ('-' if 'lim_inf' in col_lower else '--')
 
