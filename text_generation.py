@@ -1,11 +1,55 @@
 import pandas as pd
 import numpy as np
+import math
 
 def format_number(val):
     if pd.isna(val):
         return "NaN"
     # Formateo nativo %g reemplazando el punto por coma decimal
     return ("%g" % val).replace('.', ',')
+
+def format_promedio_dinamico(val):
+    """
+    Da formato al valor promedio siguiendo reglas específicas de cifras significativas:
+    - >= 100: Sin decimales.
+    - >= 10 y < 100: 3 cifras significativas.
+    - >= 1 y < 10: 2 cifras significativas.
+    - < 1: 1 cifra significativa.
+    """
+    if pd.isna(val) or val is None:
+        return "NaN"
+    
+    # Trabajamos con el valor absoluto para aplicar las reglas de escala
+    abs_val = abs(val)
+    
+    if abs_val == 0:
+        return "0"
+        
+    if abs_val >= 100:
+        # Colocar sin decimales (redondeo al entero más cercano)
+        res = round(val)
+        return str(res)
+        
+    elif abs_val >= 10:
+        # Mayores o iguales a 10 y menores a 100: 3 cifras significativas.
+        # En el rango [10, 100), 3 cifras significativas equivale a exactamente 1 decimal (ej: 12.3 o 99.9).
+        res = round(val, 1)
+        return ("%.1f" % res).replace('.', ',')
+        
+    elif abs_val >= 1:
+        # Mayores o iguales a 1 y menores a 10: 2 cifras significativas.
+        # En el rango [1, 10), 2 cifras significativas equivale a exactamente 1 decimal (ej: 1.2 o 9.9).
+        res = round(val, 1)
+        return ("%.1f" % res).replace('.', ',')
+        
+    else:
+        # Menores a 1: 1 cifra significativa.
+        # Calculamos dinámicamente la posición del primer dígito diferente de cero.
+        decimals = -int(math.floor(math.log10(abs_val)))
+        res = round(val, decimals)
+        # Formateamos con la cantidad de decimales calculados para evitar problemas de coma flotante
+        fmt = "%." + str(decimals) + "f"
+        return (fmt % res).replace('.', ',')
 
 def obtener_estaciones_extremo(grupo, columna_valor, tipo="max"):
     """
