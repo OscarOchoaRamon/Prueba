@@ -49,6 +49,10 @@ def clean_data(df):
         clean_values = s_values.loc[mask_less].str.replace('<', '', regex=False)
         numeric_values = pd.to_numeric(clean_values, errors='coerce')
         df.loc[mask_less, 'valor_num'] = numeric_values / 2.0
+        
+    # Ahora la conversión es directa porque ya no hay comas. 
+    # (Se eliminó la línea redundante que sobrescribía la limpieza)
+    df.loc[~mask_less, 'valor_num'] = pd.to_numeric(s_values.loc[~mask_less], errors='coerce')
     
     df['valor_num'] = pd.to_numeric(df['valor_num'], errors='coerce')
     df = df.dropna(subset=['valor_num'])
