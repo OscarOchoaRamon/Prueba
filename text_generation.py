@@ -101,7 +101,9 @@ def get_base_statistics_text(grupo, grafico_label="Gráfico XXX"):
         
         min_t = f"{format_number(minimo)} {unidad}{estaciones_min}"
         max_t = f"{format_number(maximo)} {unidad}{estaciones_max}"
-        prom_t = f"{format_number(promedio)} {unidad}"
+        
+        # NUEVO: Aplicamos el formateo de cifras significativas dinámicas al promedio
+        prom_t = f"{format_promedio_dinamico(promedio)} {unidad}"
     else:
         min_t, max_t, prom_t = "NaN", "NaN", "NaN"
     
