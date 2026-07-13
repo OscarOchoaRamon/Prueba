@@ -1,3 +1,5 @@
+import io
+import zipfile
 import streamlit as st
 
 from processing import load_data, clean_data, merge_data, get_regulation_groups, calculate_reference_statistics
@@ -76,6 +78,105 @@ def landing_page():
         if st.button("⛰️ Sedimentos", use_container_width=True):
             navigate_to('sediments')
             st.rerun()
+
+def generar_paquete_descarga_total(df_final, module_type, format_imagen="png", selected_standards=None, gw_ref_options=None, custom_otros_name="Otros"):
+    """
+    Genera un archivo ZIP en memoria que contiene:
+    1. Las gráficas de todos los parámetros (en el formato elegido: png o svg).
+    2. Un archivo 'interpretaciones.txt' con todos los textos generados.
+    """
+    # Creamos un buffer en memoria para el archivo ZIP
+    zip_buffer = io.BytesIO()
+    
+    with zipfile.ZipFile(zip_buffer, "a", zipfile.ZIP_DEFLATED, False) as zip_file:
+        textos_totales = []
+        parametros = df_final['parametro'].unique()
+        
+        for param in parametros:
+            # --- 1. GENERACIÓN DEL TEXTO ---
+            param_group = df_final[df_final['parametro'] == param]
+            texto_generado = ""
+            try:
+                if module_type == "surface":
+                    texto_generado = text_generation.generar_texto_superficial(
+                        param_group, selected_standards, custom_otros_name
+                    )
+                elif module_type == "effluents":
+                    texto_generado = text_generation.generar_texto_efluentes(
+                        param_group, selected_standards
+                    )
+                elif module_type == "sediments":
+                    texto_generado = text_generation.generar_texto_sedimentos(
+                        param_group, selected_standards
+                    )
+                elif module_type == "groundwater":
+                    calc_alto = "Promedio + 2 Desviaciones Estándar" in gw_ref_options
+                    calc_bajo = "Promedio - 2 Desviaciones Estándar" in gw_ref_options
+                    texto_generado = text_generation.generar_texto_subterranea(
+                        param_group, calc_ref_alto=calc_alto, calc_ref_bajo=calc_bajo
+                    )
+                
+                # Guardamos el texto del parámetro para acumularlo en el archivo final de texto
+                textos_totales.append(f"### {param.upper()}\n{texto_generado}\n\n")
+            except Exception as e:
+                textos_totales.append(f"### {param.upper()}\nError al generar texto: {e}\n\n")
+
+            # --- 2. GENERACIÓN DE LA GRÁFICA ---
+            try:
+                # Obtenemos las columnas de referencia según el módulo
+                selected_cols = []
+                if module_type == "groundwater":
+                    if gw_ref_options:
+                        if "Promedio + 2 Desviaciones Estándar" in gw_ref_options:
+                            selected_cols.append('lim_referencia_gw_sup')
+                        if "Promedio - 2 Desviaciones Estándar" in gw_ref_options:
+                            selected_cols.append('lim_referencia_gw_inf')
+                else:
+                    # Agrupar columnas de normativa para el parámetro actual
+                    reg_groups = get_regulation_groups(df_final)
+                    if selected_standards:
+                        for std in selected_standards:
+                            if std in reg_groups:
+                                selected_cols.extend(reg_groups[std])
+                
+                fig = create_chart(
+                    df_final, 
+                    param, 
+                    selected_columns=selected_cols,
+                    date_angle=selected_angle if 'selected_angle' in locals() else 45,
+                    date_format=selected_date_format if 'selected_date_format' in locals() else "MM-YY",
+                    x_label_count=custom_x_labels if 'custom_x_labels' in locals() else 0,
+                    legend_position=legend_pos_options[selected_legend_pos] if 'selected_legend_pos' in locals() else "bottom",
+                    symbol_style=selected_symbol_style if 'selected_symbol_style' in locals() else "varied",
+                    legend_size=selected_legend_size if 'selected_legend_size' in locals() else 7.0,
+                    legend_cols=selected_legend_cols if 'selected_legend_cols' in locals() else 5,
+                    symbol_size=selected_symbol_size if 'selected_symbol_size' in locals() else 3.0,        
+                    legend_spacing=selected_legend_spacing if 'selected_legend_spacing' in locals() else 0.2,
+                    log_scale=use_log_scale if 'use_log_scale' in locals() else False,
+                    custom_otros_name=custom_otros_name,
+                    custom_line_styles=custom_line_styles if 'custom_line_styles' in locals() else None
+                )
+                
+                if fig:
+                    img_buffer = io.BytesIO()
+                    # Guardamos la gráfica en el formato solicitado
+                    fig.savefig(img_buffer, format=format_imagen, dpi=300, bbox_inches='tight', pad_inches=0.1)
+                    img_buffer.seek(0)
+                    
+                    # Añadimos la imagen al ZIP
+                    filename = f"graficos/{param}.{format_imagen}"
+                    zip_file.writestr(filename, img_buffer.getvalue())
+                    import matplotlib.pyplot as plt
+                    plt.close(fig) # Liberar memoria RAM del servidor
+            except Exception as e:
+                pass # Si falla una gráfica, continuamos con el resto
+
+        # --- 3. AGREGAR EL ARCHIVO TXT AL ZIP ---
+        texto_final_acumulado = "".join(textos_totales)
+        zip_file.writestr("interpretaciones.txt", texto_final_acumulado.encode("utf-8"))
+
+    zip_buffer.seek(0)
+    return zip_buffer.getvalue()
 
 def water_quality_module(module_type="surface"):
     """
