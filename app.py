@@ -4,10 +4,7 @@ from processing import load_data, clean_data, merge_data, get_regulation_groups,
 from plotting import create_chart
 import os
 import shutil
-import texto_calidad_agua_superficial
-import texto_calidad_agua_subterránea
-import texto_calidad_efluente
-import texto_calidad_sedimentos
+import text_generation
 
 # --- CUSTOM FONT REGISTRATION ---
 # Attempt to register Bookman Old Style fonts if they exist
