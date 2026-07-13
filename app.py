@@ -417,58 +417,29 @@ def water_quality_module(module_type="surface"):
                         try:
                             param_group = df_final[df_final['parametro'] == selected_param]
                             texto_generado = ""
-                            
+                    
                             if module_type == "surface":
-                                # 1. Apagamos todas las variables para limpiar la memoria antes de evaluar
-                                for var in dir(texto_calidad_agua_superficial):
-                                    if var.startswith("ECA_") or var.startswith("LGA_") or var == "OTROS":
-                                        setattr(texto_calidad_agua_superficial, var, False)
-                                
-                                # 2. Asignamos el nombre personalizado que escribió el usuario en la interfaz
-                                texto_calidad_agua_superficial.NOMBRE_OTROS = custom_otros_name
-                                
-                                # 3. Recorremos las normativas seleccionadas para encender las banderas correspondientes
-                                if selected_standards:
-                                    for std in selected_standards:
-                                        if std == "Otros":
-                                            texto_calidad_agua_superficial.OTROS = True
-                                        elif std.startswith("ECA"):
-                                            var_name = std.replace("ECA ", "ECA_").replace(" ", "_CAT_", 1).replace(" ", "_")
-                                            if hasattr(texto_calidad_agua_superficial, var_name):
-                                                setattr(texto_calidad_agua_superficial, var_name, True)
-                                        elif std.startswith("LGA"):
-                                            var_name = std.replace(" ", "_")
-                                            if hasattr(texto_calidad_agua_superficial, var_name):
-                                                setattr(texto_calidad_agua_superficial, var_name, True)
-                                                
-                                texto_generado = texto_calidad_agua_superficial.generar_texto(param_group)
-                                
+                                texto_generado = text_generation.generar_texto_superficial(
+                                    param_group, selected_standards, custom_otros_name
+                                )
+                    
                             elif module_type == "effluents":
-                                texto_calidad_efluente.NMP_MINERO = False
-                                texto_calidad_efluente.LMP_2010_DOMESTICO = False
-                                texto_calidad_efluente.LMP_2010_MINERO = False
-                                if selected_standards:
-                                    for std in selected_standards:
-                                        var_name = std.replace(" ", "_")
-                                        if hasattr(texto_calidad_efluente, var_name):
-                                            setattr(texto_calidad_efluente, var_name, True)
-                                texto_generado = texto_calidad_efluente.generar_texto(param_group)
-                                
+                                texto_generado = text_generation.generar_texto_efluentes(
+                                    param_group, selected_standards
+                                )
+                    
                             elif module_type == "sediments":
-                                texto_calidad_sedimentos.CCME_2001_FRESHWATER = False
-                                texto_calidad_sedimentos.CCME_2001_MARINE = False
-                                if selected_standards:
-                                    for std in selected_standards:
-                                        var_name = std.replace("CCME ", "CCME_2001_")
-                                        if hasattr(texto_calidad_sedimentos, var_name):
-                                            setattr(texto_calidad_sedimentos, var_name, True)
-                                texto_generado = texto_calidad_sedimentos.generar_texto(param_group)
-                                
+                                texto_generado = text_generation.generar_texto_sedimentos(
+                                    param_group, selected_standards
+                                )
+                    
                             elif module_type == "groundwater":
-                                texto_calidad_agua_subterránea.CALCULAR_REF_ALTO = "Promedio + 2 Desviaciones Estándar" in gw_ref_options
-                                texto_calidad_agua_subterránea.CALCULAR_REF_BAJO = "Promedio - 2 Desviaciones Estándar" in gw_ref_options
-                                texto_generado = texto_calidad_agua_subterránea.generar_texto_subterranea(param_group)
-                                
+                                calc_alto = "Promedio + 2 Desviaciones Estándar" in gw_ref_options
+                                calc_bajo = "Promedio - 2 Desviaciones Estándar" in gw_ref_options
+                                texto_generado = text_generation.generar_texto_subterranea(
+                                    param_group, calc_ref_alto=calc_alto, calc_ref_bajo=calc_bajo
+                                )
+                    
                             st.write(texto_generado)
                         except Exception as e:
                             st.error(f"Ocurrió un error al generar el texto: {e}")
