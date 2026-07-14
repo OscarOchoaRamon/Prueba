@@ -508,6 +508,32 @@ def water_quality_module(module_type="surface"):
                         value=False,
                         help="Aplica escala logarítmica al eje Y. Útil cuando los datos tienen rangos muy amplios."
                     )
+
+                    # --- NUEVA SECCIÓN DE DESCARGA TOTAL ---
+                    st.sidebar.markdown("---")
+                    st.sidebar.subheader("📥 Descarga Masiva")
+                    with st.sidebar.expander("Descargar Todo el Reporte"):
+                        formato_img = st.radio("Formato de las imágenes:", ["PNG", "SVG"], index=0)
+                        
+                        # Botón que desencadena la compilación del ZIP masivo
+                        # Nota: Se procesa bajo demanda al pulsar el botón de descarga
+                        zip_data = generar_paquete_descarga_total(
+                            df_final=df_final,
+                            module_type=module_type,
+                            format_imagen=formato_img.lower(),
+                            selected_standards=selected_standards if 'selected_standards' in locals() else None,
+                            gw_ref_options=gw_ref_options if 'gw_ref_options' in locals() else None,
+                            custom_otros_name=custom_otros_name if 'custom_otros_name' in locals() else "Otros"
+                        )
+                        
+                        st.download_button(
+                            label=f"📦 Descargar ZIP (Gráficos + Textos)",
+                            data=zip_data,
+                            file_name=f"reporte_{success_msg_prefix.lower().replace(' ', '_')}.zip",
+                            mime="application/zip",
+                            use_container_width=True,
+                            help="Genera un archivo ZIP comprimido que contiene todas las gráficas generadas y un archivo TXT con todas las interpretaciones de los parámetros."
+                        )
                     
                     # --- GENERAR TEXTO ---
                     if selected_param:
