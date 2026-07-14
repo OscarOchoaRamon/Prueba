@@ -523,32 +523,60 @@ def water_quality_module(module_type="surface"):
                         help="Aplica escala logarítmica al eje Y. Útil cuando los datos tienen rangos muy amplios."
                     )
 
-                    # --- NUEVA SECCIÓN DE DESCARGA TOTAL ---
+                    # --- NUEVA SECCIÓN DE DESCARGA TOTAL (PROCESAMIENTO BAJO DEMANDA) ---
                     st.sidebar.markdown("---")
                     st.sidebar.subheader("📥 Descarga Masiva")
                     with st.sidebar.expander("Descargar Todo el Reporte"):
-                        formato_img = st.radio("Formato de las imágenes:", ["PNG", "SVG"], index=0)
+                        formato_img = st.sidebar.radio("Formato de las imágenes:", ["PNG", "SVG"], index=0, key="radio_masivo")
                         
-                        # Botón que desencadena la compilación del ZIP masivo
-                        # Nota: Se procesa bajo demanda al pulsar el botón de descarga
-                        zip_data = generar_paquete_descarga_total(
-                            df_final=df_final,
-                            module_type=module_type,
-                            format_imagen=formato_img.lower(),
-                            selected_standards=selected_standards if 'selected_standards' in locals() else None,
-                            gw_ref_options=gw_ref_options if 'gw_ref_options' in locals() else None,
-                            custom_otros_name=custom_otros_name if 'custom_otros_name' in locals() else "Otros"
-                        )
-                        
-                        st.download_button(
-                            label=f"📦 Descargar ZIP (Gráficos + Textos)",
-                            data=zip_data,
-                            file_name=f"reporte_{success_msg_prefix.lower().replace(' ', '_')}.zip",
-                            mime="application/zip",
-                            use_container_width=True,
-                            help="Genera un archivo ZIP comprimido que contiene todas las gráficas generadas y un archivo TXT con todas las interpretaciones de los parámetros."
-                        )
-                    
+                        # Inicializamos variables en el estado de la sesión para controlar la descarga
+                        if "zip_descargable" not in st.session_state:
+                            st.session_state["zip_descargable"] = None
+                        if "modulo_procesado" not in st.session_state:
+                            st.session_state["modulo_procesado"] = None
+
+                        # Botón que actúa como disparador del procesamiento pesado
+                        if st.button("🔄 Procesar y Generar Reportes", use_container_width=True, help="Haz clic aquí para preparar todas las gráficas con la configuración actual."):
+                            with st.spinner("Generando gráficas e informes... Por favor, espera."):
+                                # Ejecutamos la función pesada SOLO ahora que se hizo clic
+                                st.session_state["zip_descargable"] = generar_paquete_descarga_total(
+                                    df_final=df_final,
+                                    module_type=module_type,
+                                    format_imagen=formato_img.lower(),
+                                    selected_standards=selected_standards if 'selected_standards' in locals() else None,
+                                    gw_ref_options=gw_ref_options if 'gw_ref_options' in locals() else None,
+                                    custom_otros_name=custom_otros_name if 'custom_otros_name' in locals() else "Otros",
+                                    date_angle=selected_angle,
+                                    date_format=selected_date_format,
+                                    x_label_count=custom_x_labels,
+                                    legend_position=legend_pos_options[selected_legend_pos],
+                                    symbol_style=selected_symbol_style,
+                                    legend_size=selected_legend_size,
+                                    legend_cols=selected_legend_cols if 'selected_legend_cols' in locals() else 5,
+                                    symbol_size=selected_symbol_size,
+                                    legend_spacing=selected_legend_spacing,
+                                    log_scale=use_log_scale,
+                                    custom_line_styles=custom_line_styles if 'custom_line_styles' in locals() else None
+                                )
+                                st.session_state["modulo_procesado"] = module_type
+                                st.success("¡Reportes listos para descargar!")
+
+                        # Si el ZIP ya fue generado y pertenece al módulo actual, mostramos el botón de descarga real
+                        if st.session_state["zip_descargable"] is not None and st.session_state["modulo_procesado"] == module_type:
+                            st.download_button(
+                                label=f"💾 Descargar ZIP ({formato_img})",
+                                data=st.session_state["zip_descargable"],
+                                file_name=f"reporte_{success_msg_prefix.lower().replace(' ', '_')}.zip",
+                                mime="application/zip",
+                                use_container_width=True
+                            )
+                            
+                            # Opción para limpiar el buffer si el usuario quiere volver a procesar tras hacer cambios
+                            if st.button("🧹 Limpiar descarga", use_container_width=True):
+                                st.session_state["zip_descargable"] = None
+                                st.session_state["modulo_procesado"] = None
+                                st.rerun()
+                               
                     # --- GENERAR TEXTO ---
                     if selected_param:
                         st.markdown("### Interpretación")
